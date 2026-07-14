@@ -22,7 +22,7 @@ const translations = {
 };
 const money = value => new Intl.NumberFormat("en-IE", { style: "currency", currency: "EUR" }).format(Number(value || 0));
 const safe = value => String(value ?? "").replace(/[&<>'"]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", "'":"&#39;", '"':"&quot;" }[c]));
-const priceFor = code => code === "FWC00" ? 2 : code.startsWith("FWC") || Number(code.replace(/\D/g, "")) === 1 ? .5 : .3;
+const priceFor = code => code.startsWith("FWC") ? 1 : Number(code.replace(/\D/g, "")) === 1 ? .5 : .3;
 const setLoading = value => $("loading").classList.toggle("hidden", !value);
 let toastTimer;
 
@@ -155,7 +155,16 @@ async function clearCart() {
 
 async function createOrder() {
   const totals = calculate();
-  openModal(`<p class="eyebrow mint">CONFIRM REQUEST</p><h2>Send a request for ${totals.quantity} cards?</h2><p>Your total is <strong>${money(totals.total)}</strong>. The cards will be reserved immediately.</p><label class="consent-box"><input id="emailConsent" type="checkbox"><span>I confirm that I want this request emailed to the seller. The seller will contact me through my Vinted username.</span></label><div class="modal-actions"><button class="button secondary" data-close>Go back</button><button id="confirmOrder" class="button primary" disabled>Confirm and email seller</button></div>`);
+  const groups = [];
+  for (const item of state.inventory) {
+    const quantity = Number(state.cart[item.code] || 0);
+    if (!quantity) continue;
+    let group = groups.find(entry => entry.country === item.country);
+    if (!group) { group = { country:item.country, cards:[] }; groups.push(group); }
+    group.cards.push({ code:item.code, quantity });
+  }
+  const selection = groups.map(group => `<div class="confirm-country"><strong>${safe(group.country)}</strong>${group.cards.map(card => `<span>${card.quantity}x – ${safe(card.code)}</span>`).join("")}</div>`).join("");
+  openModal(`<p class="eyebrow mint">CONFIRM REQUEST</p><h2>Send a request for ${totals.quantity} cards?</h2><p>Your total is <strong>${money(totals.total)}</strong>. Please check your selection:</p><div class="confirm-selection">${selection}</div><label class="consent-box"><input id="emailConsent" type="checkbox"><span>I confirm that I want this request emailed to the seller. The seller will contact me through my Vinted username.</span></label><div class="modal-actions"><button class="button secondary" data-close>Go back</button><button id="confirmOrder" class="button primary" disabled>Confirm and email seller</button></div>`);
   $("emailConsent").onchange = () => $("confirmOrder").disabled = !$("emailConsent").checked;
   $("confirmOrder").onclick = async () => {
     setLoading(true);

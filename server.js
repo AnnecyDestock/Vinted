@@ -38,7 +38,11 @@ app.use(session({
   saveUninitialized: false,
   cookie: { httpOnly: true, sameSite: "lax", secure: isProduction, maxAge: 1000 * 60 * 60 * 24 * 7 }
 }));
-app.use(express.static(path.join(__dirname, "public"), { maxAge: isProduction ? "1h" : 0 }));
+app.use(express.static(path.join(__dirname, "public"), {
+  etag: false,
+  maxAge: 0,
+  setHeaders: res => res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate")
+}));
 
 const COUNTRY_NAMES = {
   FWC:"FIFA World Cup",MEX:"Mexico",RSA:"South Africa",KOR:"South Korea",CZE:"Czechia",
@@ -76,8 +80,8 @@ function defaultInventory() {
 }
 
 function priceFor(code) {
-  if (code === "FWC00") return 2;
-  if (code.startsWith("FWC") || Number(code.replace(/\D/g, "")) === 1) return 0.5;
+  if (code.startsWith("FWC")) return 1;
+  if (Number(code.replace(/\D/g, "")) === 1) return 0.5;
   return 0.3;
 }
 

@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: card-vault-market
+    name: annecy-destock
     runtime: node
     plan: free
     buildCommand: npm install

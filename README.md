@@ -27,7 +27,7 @@ A mobile-friendly card catalogue, reservation cart, Vinted message generator, an
    - `ADMIN_PASSWORD`: a strong, unique password.
    - `SELLER_USERNAME`: your Vinted username.
 6. Apply the Blueprint and wait for both resources to become available.
-7. Open the generated `card-vault-market.onrender.com` address.
+7. Open the generated `annecy-destock.onrender.com` address.
 
 Customer login accepts any simple username. To open the administrator dashboard, enter `admin` as the username; the password field appears automatically.
 

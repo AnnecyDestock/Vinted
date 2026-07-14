@@ -30,12 +30,15 @@ Object.assign(extraTranslations.hr,{pendingDetails:"{orders} narudžba/e · ukup
 Object.assign(extraTranslations.en,{confirmRequest:"CONFIRM REQUEST",sendRequestFor:"Send a request for {count} cards?",checkSelection:"Your total is {amount}. Please check your selection:",emailConsent:"I confirm that I want this request emailed to the seller. The seller will contact me through my Vinted username.",goBack:"Go back",confirmEmail:"Confirm and email seller",requestConfirmed:"REQUEST CONFIRMED",cardsReserved:"Your cards are reserved!",emailSuccess:"The seller received your email and will contact you on Vinted.",emailNotSent:"The request was saved, but email delivery needs attention.",copyBackup:"Copy backup message"});
 Object.assign(extraTranslations.fr,{confirmRequest:"CONFIRMER LA DEMANDE",sendRequestFor:"Envoyer une demande pour {count} carte(s) ?",checkSelection:"Votre total est de {amount}. Vérifiez votre sélection :",emailConsent:"Je confirme vouloir envoyer cette demande au vendeur par e-mail. Le vendeur me contactera via mon pseudo Vinted.",goBack:"Retour",confirmEmail:"Confirmer et envoyer au vendeur",requestConfirmed:"DEMANDE CONFIRMÉE",cardsReserved:"Vos cartes sont réservées !",emailSuccess:"Le vendeur a reçu votre e-mail et vous contactera sur Vinted.",emailNotSent:"La demande a été enregistrée, mais l’envoi de l’e-mail nécessite votre attention.",copyBackup:"Copier le message de secours"});
 Object.assign(extraTranslations.hr,{confirmRequest:"POTVRDA ZAHTJEVA",sendRequestFor:"Poslati zahtjev za {count} sličice?",checkSelection:"Ukupan iznos je {amount}. Provjeri svoj odabir:",emailConsent:"Potvrđujem da želim poslati ovaj zahtjev prodavatelju e-poštom. Prodavatelj će me kontaktirati putem mog Vinted korisničkog imena.",goBack:"Natrag",confirmEmail:"Potvrdi i pošalji prodavatelju",requestConfirmed:"ZAHTJEV JE POTVRĐEN",cardsReserved:"Tvoje sličice su rezervirane!",emailSuccess:"Prodavatelj je primio e-poruku i kontaktirat će te na Vintedu.",emailNotSent:"Zahtjev je spremljen, ali e-poruka nije uspješno poslana.",copyBackup:"Kopiraj rezervnu poruku"});
+Object.assign(extraTranslations.en,{numberOneCards:"NUMBER 1 AND 13 CARDS",numberOneCardsInfo:"Every country card numbered 1 and 13"});
+Object.assign(extraTranslations.fr,{numberOneCards:"CARTES NUMÉRO 1 ET 13",numberOneCardsInfo:"Les cartes numéro 1 et 13 de chaque pays"});
+Object.assign(extraTranslations.hr,{numberOneCards:"SLIČICE BROJ 1 I 13",numberOneCardsInfo:"Sličice broj 1 i 13 svake države"});
 for (const [language, dictionary] of Object.entries(translations)) Object.assign(dictionary, extraTranslations.en, extraTranslations[language] || {});
 const countryIso = {MEX:"MX",RSA:"ZA",KOR:"KR",CZE:"CZ",CAN:"CA",BIH:"BA",QAT:"QA",SUI:"CH",BRA:"BR",MAR:"MA",HAI:"HT",USA:"US",PAR:"PY",AUS:"AU",TUR:"TR",GER:"DE",CUW:"CW",CIV:"CI",ECU:"EC",NED:"NL",JPN:"JP",SWE:"SE",TUN:"TN",BEL:"BE",EGY:"EG",IRN:"IR",NZL:"NZ",ESP:"ES",CPV:"CV",KSA:"SA",URU:"UY",FRA:"FR",SEN:"SN",IRQ:"IQ",NOR:"NO",ARG:"AR",ALG:"DZ",AUT:"AT",JOR:"JO",POR:"PT",COD:"CD",UZB:"UZ",COL:"CO",CRO:"HR",GHA:"GH",PAN:"PA"};
 const specialCountryNames = { en:{FWC:"FIFA World Cup",SCO:"Scotland",ENG:"England"}, fr:{FWC:"Coupe du monde FIFA",SCO:"Écosse",ENG:"Angleterre"}, hr:{FWC:"FIFA Svjetsko prvenstvo",SCO:"Škotska",ENG:"Engleska"} };
 const money = value => new Intl.NumberFormat("en-IE", { style: "currency", currency: "EUR" }).format(Number(value || 0));
 const safe = value => String(value ?? "").replace(/[&<>'"]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", "'":"&#39;", '"':"&quot;" }[c]));
-const priceFor = code => code.startsWith("FWC") ? 1 : Number(code.replace(/\D/g, "")) === 1 ? .5 : .3;
+const priceFor = code => Number(state.inventory.find(item => item.code === code)?.price ?? (code.startsWith("FWC") ? 1 : [1,13].includes(Number(code.replace(/\D/g, ""))) ? .5 : .3));
 const setLoading = value => $("loading").classList.toggle("hidden", !value);
 let toastTimer;
 const tr = (key, values = {}) => {
@@ -231,15 +234,23 @@ function renderStats() {
 
 function renderInventory() {
   const query = $("inventorySearch").value.trim().toLowerCase();
-  $("inventoryBody").innerHTML = state.inventory.filter(x => !query || x.code.toLowerCase().includes(query) || x.country.toLowerCase().includes(query)).map(card => `<tr><td><strong>${safe(card.code)}</strong></td><td>${safe(card.country)}</td><td>${money(card.price)}</td><td><div class="stock-edit"><button data-stock="${safe(card.code)}" data-delta="-1">−</button><input data-input="${safe(card.code)}" type="number" min="0" value="${card.quantity}"><button data-stock="${safe(card.code)}" data-delta="1">+</button></div></td></tr>`).join("");
+  $("inventoryBody").innerHTML = state.inventory.filter(x => !query || x.code.toLowerCase().includes(query) || x.country.toLowerCase().includes(query)).map(card => `<tr><td><strong>${safe(card.code)}</strong></td><td>${safe(card.country)}</td><td><div class="price-edit"><span>€</span><input data-price="${safe(card.code)}" type="number" min="0.10" max="9.99" step="0.01" value="${Number(card.price).toFixed(2)}"></div></td><td><div class="stock-edit"><button data-stock="${safe(card.code)}" data-delta="-1">−</button><input data-input="${safe(card.code)}" type="number" min="0" value="${card.quantity}"><button data-stock="${safe(card.code)}" data-delta="1">+</button></div></td></tr>`).join("");
   $("inventoryBody").querySelectorAll("button[data-stock]").forEach(btn => btn.onclick = () => setStock(btn.dataset.stock, Number(btn.dataset.delta), true));
   $("inventoryBody").querySelectorAll("input[data-input]").forEach(input => input.onchange = () => setStock(input.dataset.input, Number(input.value), false));
+  $("inventoryBody").querySelectorAll("input[data-price]").forEach(input => input.onchange = () => setPrice(input.dataset.price, Number(input.value)));
 }
 
 async function setStock(code, value, relative) {
   const card = state.inventory.find(x => x.code === code); const quantity = Math.max(0, relative ? card.quantity + value : value);
-  try { const updated = await api(`/api/admin/inventory/${code}`, { method:"PATCH", body:{ quantity } }); Object.assign(card, updated); renderStats(); renderInventory(); }
+  try { const updated = await api(`/api/admin/inventory/${code}`, { method:"PATCH", body:{ quantity, price:card.price } }); Object.assign(card, updated); renderStats(); renderInventory(); }
   catch (error) { toast(error.message); }
+}
+
+async function setPrice(code, value) {
+  const card = state.inventory.find(x => x.code === code);
+  const price = Math.round(Math.max(0.10, Math.min(9.99, Number(value) || 0.30)) * 100) / 100;
+  try { const updated = await api(`/api/admin/inventory/${code}`, { method:"PATCH", body:{ quantity:card.quantity, price } }); Object.assign(card, updated); renderInventory(); toast(`${code} price updated.`); }
+  catch (error) { toast(error.message); renderInventory(); }
 }
 
 function renderBulkCountry() {

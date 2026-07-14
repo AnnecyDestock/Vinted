@@ -81,7 +81,7 @@ function defaultInventory() {
 
 function priceFor(code) {
   if (code.startsWith("FWC")) return 1;
-  if (Number(code.replace(/\D/g, "")) === 1) return 0.5;
+  if ([1,13].includes(Number(code.replace(/\D/g, "")))) return 0.5;
   return 0.3;
 }
 
@@ -93,13 +93,13 @@ function discountFor(quantity) {
   return 0;
 }
 
-function calculate(items) {
+function calculate(items, prices = {}) {
   let quantity = 0;
   let subtotal = 0;
   for (const [code, rawQty] of Object.entries(items || {})) {
     const qty = Math.max(0, Math.floor(Number(rawQty) || 0));
     quantity += qty;
-    subtotal += priceFor(code) * qty;
+    subtotal += Number(prices[code] ?? priceFor(code)) * qty;
   }
   subtotal = Math.round(subtotal * 100) / 100;
   const discountRate = discountFor(quantity);
@@ -186,6 +186,7 @@ async function initializeDatabase() {
       code VARCHAR(20) PRIMARY KEY,
       country VARCHAR(80) NOT NULL,
       quantity INTEGER NOT NULL DEFAULT 0 CHECK (quantity >= 0),
+      price NUMERIC(6,2),
       sort_order INTEGER NOT NULL DEFAULT 0
     );
     CREATE TABLE IF NOT EXISTS carts (
@@ -207,6 +208,11 @@ async function initializeDatabase() {
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
   `);
+  await pool.query("ALTER TABLE inventory ADD COLUMN IF NOT EXISTS price NUMERIC(6,2)");
+  await pool.query(`UPDATE inventory SET price=CASE
+    WHEN code LIKE 'FWC%' THEN 1.00
+    WHEN regexp_replace(code, '[^0-9]', '', 'g')::int IN (1,13) THEN 0.50
+    ELSE 0.30 END WHERE price IS NULL`);
   const seed = defaultInventory();
   const client = await pool.connect();
   try {
@@ -214,8 +220,8 @@ async function initializeDatabase() {
     await client.query("DELETE FROM inventory WHERE NOT (regexp_replace(code, '[0-9]', '', 'g') = ANY($1))", [COUNTRY_ORDER]);
     for (let i = 0; i < seed.length; i += 1) {
       const row = seed[i];
-      await client.query(`INSERT INTO inventory(code,country,quantity,sort_order) VALUES($1,$2,$3,$4)
-        ON CONFLICT(code) DO UPDATE SET country=EXCLUDED.country,sort_order=EXCLUDED.sort_order`, [row.code, row.country, row.quantity, i]);
+      await client.query(`INSERT INTO inventory(code,country,quantity,price,sort_order) VALUES($1,$2,$3,$4,$5)
+        ON CONFLICT(code) DO UPDATE SET country=EXCLUDED.country,sort_order=EXCLUDED.sort_order`, [row.code, row.country, row.quantity, priceFor(row.code), i]);
     }
     await client.query("COMMIT");
   } catch (error) {
@@ -247,8 +253,8 @@ app.post("/api/auth/logout", (req, res, next) => req.session.destroy(error => er
 
 app.get("/api/inventory", requireUser, async (_req, res, next) => {
   try {
-    const result = await pool.query("SELECT code,country,quantity FROM inventory ORDER BY sort_order,code");
-    res.json(result.rows.map(row => ({ ...row, price: priceFor(row.code) })));
+    const result = await pool.query("SELECT code,country,quantity,price::float AS price FROM inventory ORDER BY sort_order,code");
+    res.json(result.rows);
   } catch (error) { next(error); }
 });
 
@@ -264,16 +270,18 @@ app.put("/api/cart", requireUser, async (req, res, next) => {
     const requested = req.body.items || {};
     const codes = Object.keys(requested);
     const valid = {};
+    const prices = {};
     if (codes.length) {
-      const stock = await pool.query("SELECT code,quantity FROM inventory WHERE code=ANY($1)", [codes]);
+      const stock = await pool.query("SELECT code,quantity,price::float AS price FROM inventory WHERE code=ANY($1)", [codes]);
       for (const row of stock.rows) {
+        prices[row.code] = Number(row.price);
         const qty = Math.min(row.quantity, Math.max(0, Math.floor(Number(requested[row.code]) || 0)));
         if (qty > 0) valid[row.code] = qty;
       }
     }
     await pool.query(`INSERT INTO carts(username,items,updated_at) VALUES($1,$2,NOW())
       ON CONFLICT(username) DO UPDATE SET items=EXCLUDED.items,updated_at=NOW()`, [req.session.user.username.toLowerCase(), JSON.stringify(valid)]);
-    res.json({ items: valid, totals: calculate(valid) });
+    res.json({ items: valid, totals: calculate(valid, prices) });
   } catch (error) { next(error); }
 });
 
@@ -293,12 +301,13 @@ app.post("/api/orders", requireUser, async (req, res, next) => {
     const cartResult = await client.query("SELECT items FROM carts WHERE username=$1 FOR UPDATE", [req.session.user.username.toLowerCase()]);
     const items = cartResult.rows[0]?.items || {};
     if (!Object.keys(items).length) throw Object.assign(new Error("Your cart is empty."), { status: 400 });
-    const stock = await client.query("SELECT code,quantity FROM inventory WHERE code=ANY($1) FOR UPDATE", [Object.keys(items)]);
+    const stock = await client.query("SELECT code,quantity,price::float AS price FROM inventory WHERE code=ANY($1) FOR UPDATE", [Object.keys(items)]);
     const stockMap = Object.fromEntries(stock.rows.map(row => [row.code, row.quantity]));
     for (const [code, qty] of Object.entries(items)) {
       if (!stockMap[code] || stockMap[code] < qty) throw Object.assign(new Error(`${code} no longer has enough stock.`), { status: 409 });
     }
-    const totals = calculate(items);
+    const prices = Object.fromEntries(stock.rows.map(row => [row.code,Number(row.price)]));
+    const totals = calculate(items, prices);
     for (const [code, qty] of Object.entries(items)) await client.query("UPDATE inventory SET quantity=quantity-$1 WHERE code=$2", [qty, code]);
     const list = Object.keys(items).sort(itemSort).map(code => Number(items[code]) > 1 ? `${code}(${items[code]})` : code).join(", ");
     const message = `Selection from ${req.session.user.username} for €${totals.total.toFixed(2)}, including: ${list}`;
@@ -322,23 +331,24 @@ app.post("/api/orders", requireUser, async (req, res, next) => {
 
 app.get("/api/admin/inventory/template", requireAdmin, async (_req, res, next) => {
   try {
-    const rows = (await pool.query("SELECT code,country,quantity FROM inventory ORDER BY sort_order,code")).rows;
+    const rows = (await pool.query("SELECT code,country,quantity,price::float AS price FROM inventory ORDER BY sort_order,code")).rows;
     const workbook = new ExcelJS.Workbook();
     const sheet = workbook.addWorksheet("Inventory", { views: [{ state: "frozen", ySplit: 4 }] });
-    sheet.columns = [{ header:"Card code",key:"code",width:18 },{ header:"Country",key:"country",width:30 },{ header:"Quantity",key:"quantity",width:16 }];
+    sheet.columns = [{ header:"Card code",key:"code",width:18 },{ header:"Country",key:"country",width:30 },{ header:"Quantity",key:"quantity",width:16 },{ header:"Price EUR",key:"price",width:16 }];
     sheet.insertRow(1, ["ANNECY DESTOCK · INVENTORY IMPORT"]);
-    sheet.mergeCells("A1:C1");
+    sheet.mergeCells("A1:D1");
     sheet.getCell("A1").font = { bold:true,size:18,color:{argb:"FFFFFFFF"} };
     sheet.getCell("A1").fill = { type:"pattern",pattern:"solid",fgColor:{argb:"FF081B2C"} };
-    sheet.getCell("A2").value = "Edit only the Quantity column. Keep card codes unchanged, then upload this file in the admin dashboard.";
-    sheet.mergeCells("A2:C2");
+    sheet.getCell("A2").value = "Edit the Quantity and Price EUR columns. Keep card codes unchanged, then upload this file in the admin dashboard.";
+    sheet.mergeCells("A2:D2");
     sheet.getCell("A2").font = { italic:true,color:{argb:"FF536671"} };
-    sheet.getRow(4).values = ["Card code","Country","Quantity"];
+    sheet.getRow(4).values = ["Card code","Country","Quantity","Price EUR"];
     sheet.getRow(4).font = { bold:true,color:{argb:"FF081B2C"} };
     sheet.getRow(4).fill = { type:"pattern",pattern:"solid",fgColor:{argb:"FF9FE8D6"} };
-    rows.forEach(row => sheet.addRow([row.code,row.country,row.quantity]));
-    sheet.autoFilter = `A4:C${sheet.rowCount}`;
+    rows.forEach(row => sheet.addRow([row.code,row.country,row.quantity,Number(row.price)]));
+    sheet.autoFilter = `A4:D${sheet.rowCount}`;
     sheet.getColumn(3).numFmt = "0";
+    sheet.getColumn(4).numFmt = '€0.00';
     const buffer = await workbook.xlsx.writeBuffer();
     res.setHeader("Content-Type","application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
     res.setHeader("Content-Disposition",'attachment; filename="annecy-destock-inventory.xlsx"');
@@ -359,13 +369,14 @@ app.post("/api/admin/inventory/import", requireAdmin, upload.single("inventory")
       if (number <= 4) return;
       const code = String(row.getCell(1).text || "").trim().toUpperCase();
       const quantity = Number(row.getCell(3).value);
-      if (code && Number.isInteger(quantity) && quantity >= 0 && quantity <= 9999) items.push({ code, quantity });
+      const price = Number(row.getCell(4).value);
+      if (code && Number.isInteger(quantity) && quantity >= 0 && quantity <= 9999 && price >= 0.10 && price <= 9.99) items.push({ code, quantity, price:Math.round(price*100)/100 });
     });
     if (!items.length) throw Object.assign(new Error("No valid inventory rows were found."), { status:400 });
     await client.query("BEGIN");
     let updated = 0;
     for (const item of items) {
-      const result = await client.query("UPDATE inventory SET quantity=$1 WHERE code=$2", [item.quantity,item.code]);
+      const result = await client.query("UPDATE inventory SET quantity=$1,price=$2 WHERE code=$3", [item.quantity,item.price,item.code]);
       updated += result.rowCount;
     }
     await client.query("COMMIT");
@@ -382,7 +393,8 @@ app.get("/api/admin/orders", requireAdmin, async (_req, res, next) => {
 app.patch("/api/admin/inventory/:code", requireAdmin, async (req, res, next) => {
   try {
     const quantity = Math.max(0, Math.min(9999, Math.floor(Number(req.body.quantity) || 0)));
-    const result = await pool.query("UPDATE inventory SET quantity=$1 WHERE code=$2 RETURNING code,country,quantity", [quantity, req.params.code]);
+    const price = Math.round(Math.max(0.10, Math.min(9.99, Number(req.body.price) || 0.30)) * 100) / 100;
+    const result = await pool.query("UPDATE inventory SET quantity=$1,price=$2 WHERE code=$3 RETURNING code,country,quantity,price::float AS price", [quantity, price, req.params.code]);
     if (!result.rowCount) return res.status(404).json({ error: "Card not found." });
     res.json(result.rows[0]);
   } catch (error) { next(error); }
@@ -430,7 +442,7 @@ app.post("/api/admin/reset", requireAdmin, async (_req, res, next) => {
     const seed = defaultInventory();
     for (let i = 0; i < seed.length; i += 1) {
       const row = seed[i];
-      await client.query("INSERT INTO inventory(code,country,quantity,sort_order) VALUES($1,$2,$3,$4)", [row.code,row.country,row.quantity,i]);
+      await client.query("INSERT INTO inventory(code,country,quantity,price,sort_order) VALUES($1,$2,$3,$4,$5)", [row.code,row.country,row.quantity,priceFor(row.code),i]);
     }
     await client.query("COMMIT");
     res.json({ ok: true });

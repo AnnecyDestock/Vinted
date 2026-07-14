@@ -62,6 +62,9 @@ const mailer = process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMT
   host: process.env.SMTP_HOST,
   port: Number(process.env.SMTP_PORT || 587),
   secure: String(process.env.SMTP_SECURE || "false") === "true",
+  connectionTimeout: 10000,
+  greetingTimeout: 10000,
+  socketTimeout: 15000,
   auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASSWORD }
 }) : null;
 
@@ -155,14 +158,14 @@ async function sendOrderEmail(order) {
   const jpeg = await orderSheetJpeg(order);
   const groups = groupedOrderItems(order.items);
   const listHtml = groups.map(group => `<h3 style="margin:22px 0 7px;color:#0e6c61">${group.country}</h3>${group.cards.map(card => `<div style="padding:5px 0;border-bottom:1px solid #e6ece9">${card.quantity}x – <strong>${card.code}</strong></div>`).join("")}`).join("");
-  await mailer.sendMail({
+  await Promise.race([mailer.sendMail({
     from: process.env.EMAIL_FROM || process.env.SMTP_USER,
     to: ORDER_EMAIL_TO,
     subject: `New card request from @${String(order.username).replace(/^@/, "")} · €${Number(order.amount).toFixed(2)}`,
     text: orderPlainText(order),
     html: `<div style="font-family:Arial,sans-serif;max-width:680px;margin:auto;background:#fffefa;color:#172b3a"><div style="padding:28px;background:#081b2c;color:white"><div style="color:#34d6b0;font-size:12px;letter-spacing:2px">ANNECY DESTOCK</div><h1 style="margin:8px 0 0">New sticker request</h1></div><div style="padding:28px"><p>Hello ${SELLER_DISPLAY_NAME},</p><p>Vinted user <strong>@${String(order.username).replace(/^@/, "")}</strong> wants to buy <strong>${order.quantity} cards</strong> with a value of <strong>€${Number(order.amount).toFixed(2)}</strong>.</p>${listHtml}<p style="margin-top:28px;padding:16px;background:#e8f8f3;border-radius:10px">Contact this buyer via Vinted. A listing-ready JPEG selection sheet is attached.</p></div></div>`,
     attachments: [{ filename: `sticker-selection-${order.id}.jpg`, content: jpeg, contentType: "image/jpeg" }]
-  });
+  }), new Promise((_, reject) => setTimeout(() => reject(new Error("Email server timeout after 15 seconds.")), 15000))]);
   return { sent: true };
 }
 

@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: card-vault-market
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: card-vault-db
+          property: connectionString
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: ADMIN_USERNAME
+        value: admin
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: SHOP_NAME
+        value: Card Vault
+      - key: SELLER_USERNAME
+        sync: false
+
+databases:
+  - name: card-vault-db
+    plan: free
+    databaseName: card_vault
+    user: card_vault_user

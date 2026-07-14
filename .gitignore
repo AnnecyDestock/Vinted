@@ -1,0 +1,24 @@
+# Installed packages (Render installs these itself)
+node_modules/
+
+# Local secrets and environment settings
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Logs and temporary files
+*.log
+npm-debug.log*
+pnpm-debug.log*
+.DS_Store
+Thumbs.db
+
+# Editor and operating-system settings
+.vscode/
+.idea/
+
+# Test and build output
+coverage/
+dist/

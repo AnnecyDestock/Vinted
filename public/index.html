@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#081b2c">
+  <title>Card Vault</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div id="loading" class="loading hidden"><span></span></div>
+  <div id="toast" class="toast"></div>
+
+  <main id="loginView" class="login-shell">
+    <section class="login-card">
+      <div class="logo large">CV</div>
+      <p class="eyebrow">COLLECT · TRADE · COMPLETE</p>
+      <h1 id="loginTitle">Card Vault</h1>
+      <p class="lead">Build your selection from the cards currently available, then send it directly to the seller on Vinted.</p>
+      <form id="loginForm">
+        <label>YOUR VINTED USERNAME<input id="username" autocomplete="username" maxlength="60" placeholder="For example: lolek" required></label>
+        <label id="passwordGroup" class="hidden">ADMINISTRATOR PASSWORD<input id="password" type="password" autocomplete="current-password" placeholder="Your secure password"></label>
+        <button class="button primary wide" type="submit">Enter the vault <span>→</span></button>
+      </form>
+      <div class="login-note"><span>●</span> Inventory updates in real time</div>
+    </section>
+  </main>
+
+  <div id="customerView" class="hidden">
+    <header class="topbar">
+      <a class="brand" href="#"><span class="logo">CV</span><span><strong class="shop-name">Card Vault</strong><small>COLLECTIBLE MARKET</small></span></a>
+      <div class="header-actions"><span id="customerName" class="user-pill"></span><button class="button ghost logout">Sign out</button></div>
+    </header>
+    <main class="page">
+      <section class="hero">
+        <div><p class="eyebrow mint">LIVE INVENTORY</p><h1>Find the cards<br>your collection needs.</h1><p>Only cards currently in stock can be reserved.</p></div>
+        <div class="hero-stat"><strong id="availableCount">0</strong><span>cards available</span></div>
+      </section>
+      <section class="price-grid">
+        <article><span class="price-icon">◇</span><div><small>STANDARD CARDS</small><strong>€0.30</strong><p>All regular-numbered cards</p></div></article>
+        <article><span class="price-icon shine">✦</span><div><small>SHINY &amp; Nº 1</small><strong>€0.50</strong><p>FWC series and number-one cards</p></div></article>
+        <article><span class="price-icon special">★</span><div><small>SPECIAL CARD</small><strong>€2.00</strong><p>Exclusive FWC00 card</p></div></article>
+      </section>
+      <section id="orderBanner" class="order-banner hidden"></section>
+      <div class="workspace">
+        <section class="catalog panel">
+          <div class="panel-head"><div><p class="eyebrow">THE CATALOGUE</p><h2>Available cards</h2><span id="resultCount" class="muted"></span></div><label class="search"><span>⌕</span><input id="catalogSearch" type="search" placeholder="Search card or country..."></label></div>
+          <div id="catalogRows"></div>
+        </section>
+        <aside class="basket panel">
+          <div class="basket-head"><div><p class="eyebrow">YOUR SELECTION</p><h2>Basket</h2></div><span id="cartBadge">0</span></div>
+          <div id="cartList" class="cart-list"></div>
+          <div class="totals">
+            <div><span>Subtotal</span><strong id="subtotal">€0.00</strong></div>
+            <div id="discountRow" class="discount hidden"><span>Discount</span><strong id="discount">−€0.00</strong></div>
+            <div class="grand"><span>Total</span><strong id="total">€0.00</strong></div>
+            <p id="minimumNote" class="minimum hidden">Minimum €3.00 total applies below 10 cards.</p>
+          </div>
+          <button id="orderBtn" class="button primary wide" disabled>Reserve my cards <span>→</span></button>
+          <button id="clearCart" class="text-button" disabled>Clear selection</button>
+          <p class="secure-note">⌾ Cards are reserved when you confirm</p>
+        </aside>
+      </div>
+    </main>
+  </div>
+
+  <div id="adminView" class="hidden">
+    <header class="topbar"><a class="brand" href="#"><span class="logo">CV</span><span><strong class="shop-name">Card Vault</strong><small>ADMIN CONTROL ROOM</small></span></a><div class="header-actions"><span id="adminName" class="user-pill"></span><button class="button ghost logout">Sign out</button></div></header>
+    <main class="page admin-page">
+      <section class="admin-intro"><div><p class="eyebrow mint">ADMINISTRATION</p><h1>Control room</h1><p>Manage stock, add cards, and process reservations.</p></div><button id="resetDatabase" class="button danger">Reset all data</button></section>
+      <section id="stats" class="stats"></section>
+      <nav class="tabs"><button class="active" data-tab="inventory">Inventory</button><button data-tab="add">Add cards</button><button data-tab="orders">Orders</button></nav>
+      <section id="inventoryTab" class="panel admin-panel"><div class="panel-head"><div><h2>Inventory</h2><span class="muted">Adjust quantities instantly</span></div><input id="inventorySearch" type="search" placeholder="Search inventory..."></div><div class="table-wrap"><table><thead><tr><th>Card</th><th>Country</th><th>Price</th><th>Stock</th></tr></thead><tbody id="inventoryBody"></tbody></table></div></section>
+      <section id="addTab" class="panel admin-panel hidden"><div class="panel-head"><div><h2>Add cards in bulk</h2><span class="muted">Select cards and specify quantities to add</span></div><select id="countrySelect"></select></div><div id="bulkGrid" class="bulk-grid"></div><button id="bulkAdd" class="button primary">Add selected stock</button></section>
+      <section id="ordersTab" class="hidden"><div class="orders-toolbar"><input id="orderSearch" type="search" placeholder="Search customer or card..."><button id="copyPending" class="button secondary">Copy pending orders</button></div><div id="ordersGrid" class="orders-grid"></div></section>
+    </main>
+  </div>
+
+  <div id="modal" class="modal-backdrop hidden"><section class="modal"><button id="modalClose" class="modal-close">×</button><div id="modalBody"></div></section></div>
+  <script src="/app.js"></script>
+</body>
+</html>

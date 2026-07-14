@@ -82,11 +82,8 @@ function calculate(items = state.cart) {
   let quantity = 0, subtotal = 0;
   Object.entries(items).forEach(([code, qty]) => { quantity += Number(qty); subtotal += priceFor(code) * Number(qty); });
   subtotal = Math.round(subtotal * 100) / 100;
-  const rate = quantity >= 200 ? .15 : quantity >= 100 ? .1 : quantity >= 50 ? .07 : quantity >= 30 ? .05 : 0;
-  const discount = Math.round(subtotal * rate * 100) / 100;
-  const discounted = Math.round((subtotal - discount) * 100) / 100;
-  const minimumApplied = quantity > 0 && discounted < 1;
-  return { quantity, subtotal, discount, rate, minimumApplied, total: minimumApplied ? 1 : discounted };
+  const minimumApplied = quantity > 0 && subtotal < 1;
+  return { quantity, subtotal, discount: 0, rate: 0, minimumApplied, total: minimumApplied ? 1 : subtotal };
 }
 
 function applyLanguage(language) {
@@ -169,8 +166,8 @@ function renderCart() {
   const totals = calculate();
   $("cartBadge").textContent = totals.quantity;
   $("cartList").innerHTML = entries.length ? entries.map(([code, qty]) => `<div class="cart-line"><div><strong>${safe(code)}</strong><small>${qty} × ${money(priceFor(code))}</small></div><strong>${money(qty * priceFor(code))}</strong></div>`).join("") : `<div class="cart-empty">${tr("basketEmpty")}<br><small>${tr("basketHint")}</small></div>`;
-  $("subtotal").textContent = money(totals.subtotal); $("discount").textContent = `−${money(totals.discount)}`; $("total").textContent = money(totals.total);
-  $("discountRow").classList.toggle("hidden", !totals.discount); $("minimumNote").classList.toggle("hidden", !totals.minimumApplied);
+  $("subtotal").textContent = money(totals.subtotal); $("total").textContent = money(totals.total);
+  $("minimumNote").classList.toggle("hidden", !totals.minimumApplied);
   $("orderBtn").disabled = !entries.length; $("clearCart").disabled = !entries.length;
 }
 

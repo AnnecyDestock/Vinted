@@ -1,4 +1,4 @@
-# Card Vault Market
+# Annecy Destock Market
 
 A mobile-friendly card catalogue, reservation cart, Vinted message generator, and administrator dashboard. It is designed for a free one-month Render trial using a free web service and free PostgreSQL database.
 
@@ -7,7 +7,7 @@ A mobile-friendly card catalogue, reservation cart, Vinted message generator, an
 - Username-based customer sessions
 - Searchable live inventory grouped by country
 - Standard, shiny, and special card pricing
-- Automatic quantity discounts and minimum-order rule
+- Final database prices and a €1 minimum-order rule
 - Persistent customer carts
 - Transaction-safe stock reservation
 - Copyable Vinted order messages
@@ -15,7 +15,7 @@ A mobile-friendly card catalogue, reservation cart, Vinted message generator, an
 - Password-protected admin dashboard
 - Inventory editing and bulk additions
 - Paid/cancelled order workflow with stock restoration
-- Responsive original Card Vault design
+- Responsive Annecy Destock design
 - 18-language customer entry and localized essential shopping flow
 - Customer-confirmed order emails with a listing-ready JPEG attachment
 - Excel inventory download and validated admin upload

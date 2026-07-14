@@ -20,7 +20,7 @@ services:
       - key: ADMIN_PASSWORD
         sync: false
       - key: SHOP_NAME
-        value: Card Vault
+        value: Annecy Destock
       - key: SELLER_USERNAME
         sync: false
       - key: SELLER_DISPLAY_NAME

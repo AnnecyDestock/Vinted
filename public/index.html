@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#081b2c">
-  <title>Card Vault</title>
+  <meta name="theme-color" content="#159da5">
+  <title>Annecy Destock</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles.css?v=7">
-  <link rel="stylesheet" href="/enhancements.css?v=7">
+  <link rel="stylesheet" href="/styles.css?v=8">
+  <link rel="stylesheet" href="/enhancements.css?v=8">
 </head>
 <body>
   <div id="loading" class="loading hidden"><span></span></div>
@@ -17,9 +17,9 @@
 
   <main id="loginView" class="login-shell">
     <section class="login-card">
-      <div class="logo large">CV</div>
+      <div class="logo large"><img src="/annecy-destock.webp" alt="Annecy Destock"></div>
       <p class="eyebrow" data-i18n="tagline">COLLECT · TRADE · COMPLETE</p>
-      <h1 id="loginTitle">Card Vault</h1>
+      <h1 id="loginTitle">Annecy Destock</h1>
       <p class="lead" data-i18n="loginLead">Build your selection from the cards currently available, then send it directly to the seller on Vinted.</p>
       <form id="loginForm">
         <label><span data-i18n="language">LANGUAGE</span><select id="languageSelect">
@@ -35,7 +35,7 @@
 
   <div id="customerView" class="hidden">
     <header class="topbar">
-      <a class="brand" href="#"><span class="logo">CV</span><span><strong class="shop-name">Card Vault</strong><small>COLLECTIBLE MARKET</small></span></a>
+      <a class="brand" href="#"><span class="logo"><img src="/annecy-destock.webp" alt=""></span><span><strong class="shop-name">Annecy Destock</strong><small>COLLECTIBLE MARKET</small></span></a>
       <div class="header-actions"><span id="customerName" class="user-pill"></span><button class="button ghost logout">Sign out</button></div>
     </header>
     <main class="page">
@@ -59,7 +59,6 @@
           <div id="cartList" class="cart-list"></div>
           <div class="totals">
             <div><span data-i18n="subtotal">Subtotal</span><strong id="subtotal">€0.00</strong></div>
-            <div id="discountRow" class="discount hidden"><span data-i18n="discount">Discount</span><strong id="discount">−€0.00</strong></div>
             <div class="grand"><span data-i18n="total">Total</span><strong id="total">€0.00</strong></div>
             <p id="minimumNote" class="minimum hidden" data-i18n="minimumNote">Minimum order total: €1.00.</p>
           </div>
@@ -72,7 +71,7 @@
   </div>
 
   <div id="adminView" class="hidden">
-    <header class="topbar"><a class="brand" href="#"><span class="logo">CV</span><span><strong class="shop-name">Card Vault</strong><small>ADMIN CONTROL ROOM</small></span></a><div class="header-actions"><span id="adminName" class="user-pill"></span><button class="button ghost logout">Sign out</button></div></header>
+    <header class="topbar"><a class="brand" href="#"><span class="logo"><img src="/annecy-destock.webp" alt=""></span><span><strong class="shop-name">Annecy Destock</strong><small>ADMIN CONTROL ROOM</small></span></a><div class="header-actions"><span id="adminName" class="user-pill"></span><button class="button ghost logout">Sign out</button></div></header>
     <main class="page admin-page">
       <section class="admin-intro"><div><p class="eyebrow mint">ADMINISTRATION</p><h1>Control room</h1><p>Manage stock, add cards, and process reservations.</p></div><button id="resetDatabase" class="button danger">Reset all data</button></section>
       <section id="stats" class="stats"></section>
@@ -84,6 +83,6 @@
   </div>
 
   <div id="modal" class="modal-backdrop hidden"><section class="modal"><button id="modalClose" class="modal-close">×</button><div id="modalBody"></div></section></div>
-  <script src="/app.js?v=7"></script>
+  <script src="/app.js?v=8"></script>
 </body>
 </html>

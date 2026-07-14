@@ -11,3 +11,19 @@
 .confirm-country strong{margin-bottom:4px;color:#0e6c61}
 .confirm-country span{padding:2px 0 2px 12px;font-size:13px}
 @media(max-width:700px){.inventory-actions{align-items:stretch;flex-direction:column}.inventory-actions input{width:100%}}
+
+/* Annecy Destock visual identity */
+:root{--navy:#073f54;--navy2:#075c6b;--mint:#18a8ae;--mint2:#9de9e5;--cream:#eef8f7;--ink:#103b4d;--muted:#627a82;--line:#d5e8e6;--gold:#f5a20b;--shadow:0 18px 50px rgba(7,63,84,.12)}
+.login-shell{background:radial-gradient(circle at 12% 8%,#23b4b7,transparent 29rem),radial-gradient(circle at 92% 88%,#08788b,transparent 27rem),var(--navy)}
+.topbar{background:rgba(7,63,84,.97)}
+.logo{overflow:hidden;padding:0;background:#159da5;border:2px solid #ffffff2b;letter-spacing:0}
+.logo img{display:block;width:100%;height:100%;object-fit:cover}
+.logo.large{width:210px;height:140px;border-radius:22px;transform:none;box-shadow:0 16px 38px rgba(7,63,84,.22)}
+.primary{background:#f5a20b;color:#073f54;box-shadow:0 8px 22px rgba(245,162,11,.25)}
+.eyebrow.mint{color:#0b8991}
+.price-icon{background:#d8f3f1;color:#087d87}.price-icon.shine{background:#fff0cf;color:#c77a00}
+.order-banner{background:#d7f4f1;color:#075c65}
+.card-tile.selected{border-color:#18a8ae;box-shadow:0 5px 16px rgba(24,168,174,.18)}
+.country-label{background:#e3f2f1}
+.basket-head{background:linear-gradient(135deg,#073f54,#08788b)}
+.basket-head>span{background:#f5a20b}

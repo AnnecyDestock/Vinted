@@ -20,7 +20,7 @@ const pool = new Pool({
   ssl: isProduction ? { rejectUnauthorized: false } : false
 });
 
-const SHOP_NAME = process.env.SHOP_NAME || "Card Vault";
+const SHOP_NAME = process.env.SHOP_NAME || "Annecy Destock";
 const SELLER_USERNAME = process.env.SELLER_USERNAME || "your_vinted_username";
 const SELLER_DISPLAY_NAME = process.env.SELLER_DISPLAY_NAME || "mudonjo";
 const ORDER_EMAIL_TO = process.env.ORDER_EMAIL_TO || "";
@@ -90,14 +90,6 @@ function priceFor(code) {
   return 0.3;
 }
 
-function discountFor(quantity) {
-  if (quantity >= 200) return 0.15;
-  if (quantity >= 100) return 0.10;
-  if (quantity >= 50) return 0.07;
-  if (quantity >= 30) return 0.05;
-  return 0;
-}
-
 function calculate(items, prices = {}) {
   let quantity = 0;
   let subtotal = 0;
@@ -107,11 +99,8 @@ function calculate(items, prices = {}) {
     subtotal += Number(prices[code] ?? priceFor(code)) * qty;
   }
   subtotal = Math.round(subtotal * 100) / 100;
-  const discountRate = discountFor(quantity);
-  const discount = Math.round(subtotal * discountRate * 100) / 100;
-  const discounted = Math.round((subtotal - discount) * 100) / 100;
-  const minimumApplied = quantity > 0 && discounted < 1;
-  return { quantity, subtotal, discountRate, discount, minimumApplied, total: minimumApplied ? 1 : discounted };
+  const minimumApplied = quantity > 0 && subtotal < 1;
+  return { quantity, subtotal, discountRate: 0, discount: 0, minimumApplied, total: minimumApplied ? 1 : subtotal };
 }
 
 function itemSort(a, b) {

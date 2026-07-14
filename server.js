@@ -24,6 +24,8 @@ const SHOP_NAME = process.env.SHOP_NAME || "Card Vault";
 const SELLER_USERNAME = process.env.SELLER_USERNAME || "your_vinted_username";
 const SELLER_DISPLAY_NAME = process.env.SELLER_DISPLAY_NAME || "mudonjo";
 const ORDER_EMAIL_TO = process.env.ORDER_EMAIL_TO || "";
+const RESEND_API_KEY = process.env.RESEND_API_KEY || "";
+const RESEND_FROM = process.env.RESEND_FROM || "Annecy Destock <onboarding@resend.dev>";
 const ADMIN_USERNAME = (process.env.ADMIN_USERNAME || "admin").trim();
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "change-me-before-deployment";
 
@@ -154,16 +156,38 @@ async function orderSheetJpeg(order) {
 }
 
 async function sendOrderEmail(order) {
-  if (!mailer || !ORDER_EMAIL_TO) return { sent: false, reason: "Email is not configured." };
+  if ((!RESEND_API_KEY && !mailer) || !ORDER_EMAIL_TO) return { sent: false, reason: "Email is not configured." };
   const jpeg = await orderSheetJpeg(order);
   const groups = groupedOrderItems(order.items);
   const listHtml = groups.map(group => `<h3 style="margin:22px 0 7px;color:#0e6c61">${group.country}</h3>${group.cards.map(card => `<div style="padding:5px 0;border-bottom:1px solid #e6ece9">${card.quantity}x – <strong>${card.code}</strong></div>`).join("")}`).join("");
+  const subject = `New card request from @${String(order.username).replace(/^@/, "")} · €${Number(order.amount).toFixed(2)}`;
+  const html = `<div style="font-family:Arial,sans-serif;max-width:680px;margin:auto;background:#fffefa;color:#172b3a"><div style="padding:28px;background:#081b2c;color:white"><div style="color:#34d6b0;font-size:12px;letter-spacing:2px">ANNECY DESTOCK</div><h1 style="margin:8px 0 0">New sticker request</h1></div><div style="padding:28px"><p>Hello ${SELLER_DISPLAY_NAME},</p><p>Vinted user <strong>@${String(order.username).replace(/^@/, "")}</strong> wants to buy <strong>${order.quantity} cards</strong> with a value of <strong>€${Number(order.amount).toFixed(2)}</strong>.</p>${listHtml}<p style="margin-top:28px;padding:16px;background:#e8f8f3;border-radius:10px">Contact this buyer via Vinted. A listing-ready JPEG selection sheet is attached.</p></div></div>`;
+  if (RESEND_API_KEY) {
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from: RESEND_FROM,
+        to: [ORDER_EMAIL_TO],
+        subject,
+        html,
+        text: orderPlainText(order),
+        attachments: [{ filename:`sticker-selection-${order.id}.jpg`, content:jpeg.toString("base64") }]
+      }),
+      signal: AbortSignal.timeout(15000)
+    });
+    if (!response.ok) {
+      const detail = await response.text();
+      throw new Error(`Resend API ${response.status}: ${detail.slice(0,500)}`);
+    }
+    return { sent:true, provider:"resend" };
+  }
   await Promise.race([mailer.sendMail({
     from: process.env.EMAIL_FROM || process.env.SMTP_USER,
     to: ORDER_EMAIL_TO,
-    subject: `New card request from @${String(order.username).replace(/^@/, "")} · €${Number(order.amount).toFixed(2)}`,
+    subject,
     text: orderPlainText(order),
-    html: `<div style="font-family:Arial,sans-serif;max-width:680px;margin:auto;background:#fffefa;color:#172b3a"><div style="padding:28px;background:#081b2c;color:white"><div style="color:#34d6b0;font-size:12px;letter-spacing:2px">ANNECY DESTOCK</div><h1 style="margin:8px 0 0">New sticker request</h1></div><div style="padding:28px"><p>Hello ${SELLER_DISPLAY_NAME},</p><p>Vinted user <strong>@${String(order.username).replace(/^@/, "")}</strong> wants to buy <strong>${order.quantity} cards</strong> with a value of <strong>€${Number(order.amount).toFixed(2)}</strong>.</p>${listHtml}<p style="margin-top:28px;padding:16px;background:#e8f8f3;border-radius:10px">Contact this buyer via Vinted. A listing-ready JPEG selection sheet is attached.</p></div></div>`,
+    html,
     attachments: [{ filename: `sticker-selection-${order.id}.jpg`, content: jpeg, contentType: "image/jpeg" }]
   }), new Promise((_, reject) => setTimeout(() => reject(new Error("Email server timeout after 15 seconds.")), 15000))]);
   return { sent: true };
@@ -234,7 +258,7 @@ async function initializeDatabase() {
 }
 
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
-app.get("/api/config", (_req, res) => res.json({ shopName: SHOP_NAME, sellerUsername: SELLER_USERNAME, adminUsername: ADMIN_USERNAME, emailConfigured: Boolean(mailer && ORDER_EMAIL_TO) }));
+app.get("/api/config", (_req, res) => res.json({ shopName: SHOP_NAME, sellerUsername: SELLER_USERNAME, adminUsername: ADMIN_USERNAME, emailConfigured: Boolean(ORDER_EMAIL_TO && (RESEND_API_KEY || mailer)), emailProvider: RESEND_API_KEY ? "resend" : mailer ? "smtp" : null }));
 app.get("/api/auth/me", (req, res) => res.json({ user: req.session.user || null }));
 
 app.post("/api/auth/login", async (req, res, next) => {

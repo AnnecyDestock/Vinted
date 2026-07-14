@@ -8,8 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles.css?v=3">
-  <link rel="stylesheet" href="/enhancements.css?v=3">
+  <link rel="stylesheet" href="/styles.css?v=5">
+  <link rel="stylesheet" href="/enhancements.css?v=5">
 </head>
 <body>
   <div id="loading" class="loading hidden"><span></span></div>
@@ -41,31 +41,31 @@
     <main class="page">
       <section class="hero">
         <div><p class="eyebrow mint" data-i18n="liveInventory">LIVE INVENTORY</p><h1 data-i18n="heroTitle">Find the cards your collection needs.</h1><p data-i18n="heroLead">Only cards currently in stock can be reserved.</p></div>
-        <div class="hero-stat"><strong id="availableCount">0</strong><span>cards available</span></div>
+        <div class="hero-stat"><strong id="availableCount">0</strong><span data-i18n="cardsAvailable">cards available</span></div>
       </section>
       <section class="price-grid">
-        <article><span class="price-icon">◇</span><div><small>STANDARD CARDS</small><strong>€0.30</strong><p>All regular-numbered cards</p></div></article>
-        <article><span class="price-icon shine">✦</span><div><small>NUMBER 1 CARDS</small><strong>€0.50</strong><p>Every country card numbered 1</p></div></article>
-        <article><span class="price-icon special">★</span><div><small>FWC CARDS</small><strong>€1.00</strong><p>Every card in the FWC series</p></div></article>
+        <article><span class="price-icon">◇</span><div><small data-i18n="standardCards">STANDARD CARDS</small><strong>€0.30</strong><p data-i18n="standardCardsInfo">All regular-numbered cards</p></div></article>
+        <article><span class="price-icon shine">✦</span><div><small data-i18n="numberOneCards">NUMBER 1 CARDS</small><strong>€0.50</strong><p data-i18n="numberOneCardsInfo">Every country card numbered 1</p></div></article>
+        <article><span class="price-icon special">★</span><div><small data-i18n="fwcCards">FWC CARDS</small><strong>€1.00</strong><p data-i18n="fwcCardsInfo">Every card in the FWC series</p></div></article>
       </section>
       <section id="orderBanner" class="order-banner hidden"></section>
       <div class="workspace">
         <section class="catalog panel">
-          <div class="panel-head"><div><p class="eyebrow">THE CATALOGUE</p><h2>Available cards</h2><span id="resultCount" class="muted"></span></div><label class="search"><span>⌕</span><input id="catalogSearch" type="search" placeholder="Search card or country..."></label></div>
+          <div class="panel-head"><div><p class="eyebrow" data-i18n="catalogue">THE CATALOGUE</p><h2 data-i18n="availableCards">Available cards</h2><span id="resultCount" class="muted"></span></div><label class="search"><span>⌕</span><input id="catalogSearch" type="search" placeholder="Search card or country..." data-i18n-placeholder="searchCards"></label></div>
           <div id="catalogRows"></div>
         </section>
         <aside class="basket panel">
-          <div class="basket-head"><div><p class="eyebrow">YOUR SELECTION</p><h2>Basket</h2></div><span id="cartBadge">0</span></div>
+          <div class="basket-head"><div><p class="eyebrow" data-i18n="yourSelection">YOUR SELECTION</p><h2 data-i18n="basket">Basket</h2></div><span id="cartBadge">0</span></div>
           <div id="cartList" class="cart-list"></div>
           <div class="totals">
-            <div><span>Subtotal</span><strong id="subtotal">€0.00</strong></div>
-            <div id="discountRow" class="discount hidden"><span>Discount</span><strong id="discount">−€0.00</strong></div>
-            <div class="grand"><span>Total</span><strong id="total">€0.00</strong></div>
+            <div><span data-i18n="subtotal">Subtotal</span><strong id="subtotal">€0.00</strong></div>
+            <div id="discountRow" class="discount hidden"><span data-i18n="discount">Discount</span><strong id="discount">−€0.00</strong></div>
+            <div class="grand"><span data-i18n="total">Total</span><strong id="total">€0.00</strong></div>
             <p id="minimumNote" class="minimum hidden" data-i18n="minimumNote">Minimum order total: €1.00.</p>
           </div>
           <button id="orderBtn" class="button primary wide" disabled><span data-i18n="reserve">Send my request</span> <span>→</span></button>
-          <button id="clearCart" class="text-button" disabled>Clear selection</button>
-          <p class="secure-note">⌾ Cards are reserved when you confirm</p>
+          <button id="clearCart" class="text-button" disabled data-i18n="clearSelection">Clear selection</button>
+          <p class="secure-note">⌾ <span data-i18n="reservedOnConfirm">Cards are reserved when you confirm</span></p>
         </aside>
       </div>
     </main>
@@ -84,6 +84,6 @@
   </div>
 
   <div id="modal" class="modal-backdrop hidden"><section class="modal"><button id="modalClose" class="modal-close">×</button><div id="modalBody"></div></section></div>
-  <script src="/app.js?v=3"></script>
+  <script src="/app.js?v=5"></script>
 </body>
 </html>

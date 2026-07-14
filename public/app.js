@@ -20,11 +20,35 @@ const translations = {
   el:{tagline:"ΣΥΛΛΕΞΕ · ΑΝΤΑΛΛΑΞΕ · ΣΥΜΠΛΗΡΩΣΕ",loginLead:"Επίλεξε διαθέσιμες κάρτες και στείλε αίτημα στον πωλητή.",language:"ΓΛΩΣΣΑ",username:"ΤΟ ΟΝΟΜΑ ΣΟΥ ΣΤΟ VINTED",enter:"Άνοιγμα συλλογής",liveInventory:"Ζωντανή ενημέρωση αποθέματος",heroTitle:"Βρες τις κάρτες που λείπουν από τη συλλογή σου.",heroLead:"Μόνο διαθέσιμες κάρτες μπορούν να κρατηθούν.",minimumNote:"Ελάχιστη παραγγελία: 1,00 €.",reserve:"Αποστολή αιτήματος"},
   lt:{tagline:"RINK · KEISK · UŽBAIK",loginLead:"Pasirink turimas korteles ir siųsk užklausą pardavėjui.",language:"KALBA",username:"TAVO VINTED VARDAS",enter:"Atverti kolekciją",liveInventory:"Atsargos atnaujinamos tiesiogiai",heroTitle:"Rask korteles, kurių trūksta tavo kolekcijai.",heroLead:"Rezervuoti galima tik turimas korteles.",minimumNote:"Minimali užsakymo suma: 1,00 €.",reserve:"Siųsti užklausą"}
 };
+const extraTranslations = {
+  en:{standardCards:"STANDARD CARDS",standardCardsInfo:"All regular-numbered cards",numberOneCards:"NUMBER 1 CARDS",numberOneCardsInfo:"Every country card numbered 1",fwcCards:"FWC CARDS",fwcCardsInfo:"Every card in the FWC series",cardsAvailable:"cards available",catalogue:"THE CATALOGUE",availableCards:"Available cards",searchCards:"Search card or country...",referencesInStock:"{count} card references in stock",available:"available",inStock:"{count} in stock",soldOut:"Sold out",basketEmpty:"Your vault is empty.",basketHint:"Add cards from the catalogue.",subtotal:"Subtotal",discount:"Discount",total:"Total",pending:"You have a pending reservation.",pendingDetails:"{count} cards · {amount} · The seller has received your request and will contact you on Vinted.",noMatch:"No cards match your search."},
+  hr:{standardCards:"STANDARDNE SLIČICE",standardCardsInfo:"Sve obične numerirane sličice",numberOneCards:"SLIČICE BROJ 1",numberOneCardsInfo:"Sličica broj 1 svake države",fwcCards:"FWC SLIČICE",fwcCardsInfo:"Sve sličice iz FWC serije",cardsAvailable:"dostupnih sličica",catalogue:"KATALOG",availableCards:"Dostupne sličice",searchCards:"Pretraži sličicu ili državu...",referencesInStock:"{count} vrsta sličica na zalihi",available:"dostupno",inStock:"{count} na zalihi",soldOut:"Rasprodano",basketEmpty:"Tvoj odabir je prazan.",basketHint:"Dodaj sličice iz kataloga.",subtotal:"Međuzbroj",discount:"Popust",total:"Ukupno",pending:"Imaš rezervaciju na čekanju.",pendingDetails:"{count} sličica · {amount} · Prodavatelj je primio tvoj zahtjev i kontaktirat će te na Vintedu.",noMatch:"Nema sličica koje odgovaraju pretraživanju."}
+};
+Object.assign(extraTranslations.en,{pending:"You have pending reservations.",pendingDetails:"{orders} order(s) · {units} cards in total · {unique} unique references · {amount}. The seller received your request and will contact you on Vinted.",yourSelection:"YOUR SELECTION",basket:"Basket",clearSelection:"Clear selection",reservedOnConfirm:"Cards are reserved when you confirm"});
+extraTranslations.fr={standardCards:"CARTES STANDARD",standardCardsInfo:"Toutes les cartes numérotées classiques",numberOneCards:"CARTES NUMÉRO 1",numberOneCardsInfo:"La carte numéro 1 de chaque pays",fwcCards:"CARTES FWC",fwcCardsInfo:"Toutes les cartes de la série FWC",cardsAvailable:"cartes disponibles",catalogue:"LE CATALOGUE",availableCards:"Cartes disponibles",searchCards:"Rechercher une carte ou un pays…",referencesInStock:"{count} références de cartes en stock",available:"disponibles",inStock:"{count} en stock",soldOut:"Épuisée",basketEmpty:"Votre sélection est vide.",basketHint:"Ajoutez des cartes depuis le catalogue.",subtotal:"Sous-total",discount:"Remise",total:"Total",pending:"Vous avez des réservations en attente.",pendingDetails:"{orders} commande(s) · {units} carte(s) au total · {unique} référence(s) unique(s) · {amount}. Le vendeur a reçu votre demande et vous contactera sur Vinted.",noMatch:"Aucune carte ne correspond à votre recherche.",yourSelection:"VOTRE SÉLECTION",basket:"Panier",clearSelection:"Vider la sélection",reservedOnConfirm:"Les cartes sont réservées après confirmation"};
+Object.assign(extraTranslations.hr,{pendingDetails:"{orders} narudžba/e · ukupno {units} sličica · {unique} jedinstvenih oznaka · {amount}. Prodavatelj je primio tvoj zahtjev i kontaktirat će te na Vintedu.",yourSelection:"TVOJ ODABIR",basket:"Košarica",clearSelection:"Isprazni odabir",reservedOnConfirm:"Sličice se rezerviraju nakon potvrde"});
+for (const [language, dictionary] of Object.entries(translations)) Object.assign(dictionary, extraTranslations.en, extraTranslations[language] || {});
+const countryIso = {MEX:"MX",RSA:"ZA",KOR:"KR",CZE:"CZ",CAN:"CA",BIH:"BA",QAT:"QA",SUI:"CH",BRA:"BR",MAR:"MA",HAI:"HT",USA:"US",PAR:"PY",AUS:"AU",TUR:"TR",GER:"DE",CUW:"CW",CIV:"CI",ECU:"EC",NED:"NL",JPN:"JP",SWE:"SE",TUN:"TN",BEL:"BE",EGY:"EG",IRN:"IR",NZL:"NZ",ESP:"ES",CPV:"CV",KSA:"SA",URU:"UY",FRA:"FR",SEN:"SN",IRQ:"IQ",NOR:"NO",ARG:"AR",ALG:"DZ",AUT:"AT",JOR:"JO",POR:"PT",COD:"CD",UZB:"UZ",COL:"CO",CRO:"HR",GHA:"GH",PAN:"PA"};
+const specialCountryNames = { en:{FWC:"FIFA World Cup",SCO:"Scotland",ENG:"England"}, fr:{FWC:"Coupe du monde FIFA",SCO:"Écosse",ENG:"Angleterre"}, hr:{FWC:"FIFA Svjetsko prvenstvo",SCO:"Škotska",ENG:"Engleska"} };
 const money = value => new Intl.NumberFormat("en-IE", { style: "currency", currency: "EUR" }).format(Number(value || 0));
 const safe = value => String(value ?? "").replace(/[&<>'"]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", "'":"&#39;", '"':"&quot;" }[c]));
 const priceFor = code => code.startsWith("FWC") ? 1 : Number(code.replace(/\D/g, "")) === 1 ? .5 : .3;
 const setLoading = value => $("loading").classList.toggle("hidden", !value);
 let toastTimer;
+const tr = (key, values = {}) => {
+  const language = $("languageSelect")?.value || "en";
+  return String(translations[language]?.[key] || translations.en[key] || key).replace(/\{(\w+)\}/g, (_match, name) => values[name] ?? "");
+};
+function localizedCountry(item) {
+  const language = $("languageSelect")?.value || "en";
+  const prefix = String(item.code || "").match(/^[A-Z]+/)?.[0] || "";
+  if (specialCountryNames[language]?.[prefix]) return specialCountryNames[language][prefix];
+  if (specialCountryNames.en[prefix]) return specialCountryNames.en[prefix];
+  const iso = countryIso[prefix];
+  if (!iso) return item.country;
+  try { return new Intl.DisplayNames([language],{type:"region"}).of(iso) || item.country; }
+  catch (_error) { return item.country; }
+}
 
 function toast(message) {
   $("toast").textContent = message;
@@ -65,6 +89,8 @@ function applyLanguage(language) {
   document.documentElement.lang = chosen;
   $("languageSelect").value = chosen;
   document.querySelectorAll("[data-i18n]").forEach(element => { const value = translations[chosen][element.dataset.i18n]; if (value) element.textContent = value; });
+  document.querySelectorAll("[data-i18n-placeholder]").forEach(element => { const value = translations[chosen][element.dataset.i18nPlaceholder]; if (value) element.placeholder = value; });
+  if (state.user?.role === "customer" && state.inventory.length) { renderCatalog(); renderCart(); renderOrderBanner(); }
 }
 
 async function login(event) {
@@ -109,17 +135,17 @@ function renderCustomer() {
 
 function renderCatalog() {
   const query = $("catalogSearch").value.trim().toLowerCase();
-  const visible = state.inventory.filter(item => !query || item.code.toLowerCase().includes(query) || item.country.toLowerCase().includes(query));
-  const groups = Object.groupBy ? Object.groupBy(visible, item => item.country) : visible.reduce((all, item) => ((all[item.country] ||= []).push(item), all), {});
-  $("resultCount").textContent = `${visible.filter(x => x.quantity > 0).length} card references in stock`;
+  const visible = state.inventory.filter(item => !query || item.code.toLowerCase().includes(query) || item.country.toLowerCase().includes(query) || localizedCountry(item).toLowerCase().includes(query));
+  const groups = Object.groupBy ? Object.groupBy(visible, localizedCountry) : visible.reduce((all, item) => { const country=localizedCountry(item); (all[country] ||= []).push(item); return all; }, {});
+  $("resultCount").textContent = tr("referencesInStock", { count:visible.filter(x => x.quantity > 0).length });
   $("catalogRows").innerHTML = Object.entries(groups).map(([country, cards]) => `
-    <section class="country-row"><div class="country-label"><strong>${safe(country)}</strong><small>${cards.filter(x => x.quantity > 0).length} available</small></div>
+    <section class="country-row"><div class="country-label"><strong>${safe(country)}</strong><small>${cards.filter(x => x.quantity > 0).length} ${tr("available")}</small></div>
     <div class="card-grid">${cards.map(card => {
       const qty = Number(state.cart[card.code] || 0);
       return `<article class="card-tile ${qty ? "selected" : ""} ${card.quantity < 1 ? "sold" : ""}">
-        <div class="card-top"><span>${safe(card.code)}</span><span class="chip">${money(card.price)}</span></div><div class="stock">${card.quantity ? `${card.quantity} in stock` : "Sold out"}</div>
+        <div class="card-top"><span>${safe(card.code)}</span><span class="chip">${money(card.price)}</span></div><div class="stock">${card.quantity ? tr("inStock",{count:card.quantity}) : tr("soldOut")}</div>
         <div class="stepper"><button data-code="${safe(card.code)}" data-delta="-1" ${qty < 1 ? "disabled" : ""}>−</button><span>${qty}</span><button data-code="${safe(card.code)}" data-delta="1" ${qty >= card.quantity ? "disabled" : ""}>+</button></div></article>`;
-    }).join("")}</div></section>`).join("") || `<div class="cart-empty">No cards match your search.</div>`;
+  }).join("")}</div></section>`).join("") || `<div class="cart-empty">${tr("noMatch")}</div>`;
   $("catalogRows").querySelectorAll("button[data-code]").forEach(button => button.onclick = () => changeCart(button.dataset.code, Number(button.dataset.delta)));
 }
 
@@ -136,16 +162,29 @@ function renderCart() {
   const entries = Object.entries(state.cart);
   const totals = calculate();
   $("cartBadge").textContent = totals.quantity;
-  $("cartList").innerHTML = entries.length ? entries.map(([code, qty]) => `<div class="cart-line"><div><strong>${safe(code)}</strong><small>${qty} × ${money(priceFor(code))}</small></div><strong>${money(qty * priceFor(code))}</strong></div>`).join("") : `<div class="cart-empty">Your vault is empty.<br><small>Add cards from the catalogue.</small></div>`;
+  $("cartList").innerHTML = entries.length ? entries.map(([code, qty]) => `<div class="cart-line"><div><strong>${safe(code)}</strong><small>${qty} × ${money(priceFor(code))}</small></div><strong>${money(qty * priceFor(code))}</strong></div>`).join("") : `<div class="cart-empty">${tr("basketEmpty")}<br><small>${tr("basketHint")}</small></div>`;
   $("subtotal").textContent = money(totals.subtotal); $("discount").textContent = `−${money(totals.discount)}`; $("total").textContent = money(totals.total);
   $("discountRow").classList.toggle("hidden", !totals.discount); $("minimumNote").classList.toggle("hidden", !totals.minimumApplied);
   $("orderBtn").disabled = !entries.length; $("clearCart").disabled = !entries.length;
 }
 
 function renderOrderBanner() {
-  const pending = state.orders.find(order => order.status === "pending");
-  $("orderBanner").classList.toggle("hidden", !pending);
-  if (pending) $("orderBanner").innerHTML = `<strong>You have a pending reservation.</strong> ${pending.quantity} cards · ${money(pending.amount)} · Send its message to <strong>${safe(state.config.sellerUsername)}</strong> on Vinted.`;
+  const pending = state.orders.filter(order => order.status === "pending");
+  $("orderBanner").classList.toggle("hidden", !pending.length);
+  if (pending.length) {
+    const units = pending.reduce((sum, order) => sum + Number(order.quantity || 0), 0);
+    const amount = pending.reduce((sum, order) => sum + Number(order.amount || 0), 0);
+    const unique = new Set(pending.flatMap(order => Object.keys(order.items || {}))).size;
+    $("orderBanner").innerHTML = `<strong>${tr("pending")}</strong> ${tr("pendingDetails",{orders:pending.length,units,unique,amount:money(amount)})}`;
+  } else {
+    $("orderBanner").innerHTML = "";
+  }
+}
+
+async function refreshCustomerOrders() {
+  if (state.user?.role !== "customer") return;
+  try { state.orders = await api("/api/orders/my"); renderOrderBanner(); }
+  catch (_error) { /* A temporary refresh failure should not interrupt shopping. */ }
 }
 
 async function clearCart() {
@@ -159,8 +198,9 @@ async function createOrder() {
   for (const item of state.inventory) {
     const quantity = Number(state.cart[item.code] || 0);
     if (!quantity) continue;
-    let group = groups.find(entry => entry.country === item.country);
-    if (!group) { group = { country:item.country, cards:[] }; groups.push(group); }
+    const country = localizedCountry(item);
+    let group = groups.find(entry => entry.country === country);
+    if (!group) { group = { country, cards:[] }; groups.push(group); }
     group.cards.push({ code:item.code, quantity });
   }
   const selection = groups.map(group => `<div class="confirm-country"><strong>${safe(group.country)}</strong>${group.cards.map(card => `<span>${card.quantity}x – ${safe(card.code)}</span>`).join("")}</div>`).join("");
@@ -264,6 +304,8 @@ document.querySelectorAll(".tabs button").forEach(button => button.onclick = () 
 $("copyPending").onclick = () => { const messages = state.orders.filter(x=>x.status==="pending").map(x=>x.message); messages.length ? copyText(messages.join("\n\n")) : toast("No pending orders."); };
 $("resetDatabase").onclick = async () => { if (!confirm("This permanently erases every cart and order and restores the sample inventory. Continue?")) return; setLoading(true); try{await api("/api/admin/reset",{method:"POST"});state.inventory=await api("/api/inventory");state.orders=[];renderAdmin();toast("Database reset.")}catch(e){toast(e.message)}finally{setLoading(false)}};
 $("modalClose").onclick = closeModal; $("modal").onclick = event => { if (event.target === $("modal")) closeModal(); };
+window.addEventListener("focus", refreshCustomerOrders);
+setInterval(refreshCustomerOrders, 30000);
 
 (async function init() {
   setLoading(true);

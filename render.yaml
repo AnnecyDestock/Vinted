@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: annecy-destock
+    name: card-vault-market
     runtime: node
     plan: free
     buildCommand: npm install
@@ -22,6 +22,22 @@ services:
       - key: SHOP_NAME
         value: Card Vault
       - key: SELLER_USERNAME
+        sync: false
+      - key: SELLER_DISPLAY_NAME
+        value: mudonjo
+      - key: ORDER_EMAIL_TO
+        sync: false
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_SECURE
+        value: "false"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: EMAIL_FROM
         sync: false
 
 databases:

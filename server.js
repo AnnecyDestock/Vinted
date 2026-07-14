@@ -6,6 +6,10 @@ const session = require("express-session");
 const pgSession = require("connect-pg-simple")(session);
 const helmet = require("helmet");
 const bcrypt = require("bcryptjs");
+const nodemailer = require("nodemailer");
+const sharp = require("sharp");
+const multer = require("multer");
+const ExcelJS = require("exceljs");
 const { Pool } = require("pg");
 
 const app = express();
@@ -18,6 +22,8 @@ const pool = new Pool({
 
 const SHOP_NAME = process.env.SHOP_NAME || "Card Vault";
 const SELLER_USERNAME = process.env.SELLER_USERNAME || "your_vinted_username";
+const SELLER_DISPLAY_NAME = process.env.SELLER_DISPLAY_NAME || "mudonjo";
+const ORDER_EMAIL_TO = process.env.ORDER_EMAIL_TO || "";
 const ADMIN_USERNAME = (process.env.ADMIN_USERNAME || "admin").trim();
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "change-me-before-deployment";
 
@@ -35,20 +41,36 @@ app.use(session({
 app.use(express.static(path.join(__dirname, "public"), { maxAge: isProduction ? "1h" : 0 }));
 
 const COUNTRY_NAMES = {
-  ARG: "Argentina", BRA: "Brazil", ENG: "England", FRA: "France",
-  GER: "Germany", ITA: "Italy", NED: "Netherlands", POR: "Portugal",
-  ESP: "Spain", BEL: "Belgium", CRO: "Croatia", MAR: "Morocco"
+  FWC:"FIFA World Cup",MEX:"Mexico",RSA:"South Africa",KOR:"South Korea",CZE:"Czechia",
+  CAN:"Canada",BIH:"Bosnia and Herzegovina",QAT:"Qatar",SUI:"Switzerland",BRA:"Brazil",MAR:"Morocco",
+  HAI:"Haiti",SCO:"Scotland",USA:"United States",PAR:"Paraguay",AUS:"Australia",TUR:"Türkiye",
+  GER:"Germany",CUW:"Curaçao",CIV:"Ivory Coast",ECU:"Ecuador",NED:"Netherlands",JPN:"Japan",
+  SWE:"Sweden",TUN:"Tunisia",BEL:"Belgium",EGY:"Egypt",IRN:"Iran",NZL:"New Zealand",
+  ESP:"Spain",CPV:"Cape Verde",KSA:"Saudi Arabia",URU:"Uruguay",FRA:"France",SEN:"Senegal",
+  IRQ:"Iraq",NOR:"Norway",ARG:"Argentina",ALG:"Algeria",AUT:"Austria",JOR:"Jordan",
+  POR:"Portugal",COD:"DR Congo",UZB:"Uzbekistan",COL:"Colombia",ENG:"England",CRO:"Croatia",
+  GHA:"Ghana",PAN:"Panama"
 };
+const COUNTRY_ORDER = Object.keys(COUNTRY_NAMES);
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 3 * 1024 * 1024 } });
+
+const mailer = process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASSWORD ? nodemailer.createTransport({
+  host: process.env.SMTP_HOST,
+  port: Number(process.env.SMTP_PORT || 587),
+  secure: String(process.env.SMTP_SECURE || "false") === "true",
+  auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASSWORD }
+}) : null;
 
 function defaultInventory() {
   const rows = [];
   for (const [prefix, country] of Object.entries(COUNTRY_NAMES)) {
+    if (prefix === "FWC") {
+      for (let number = 0; number <= 20; number += 1) rows.push({ code: `FWC${String(number).padStart(2, "0")}`, country, quantity: number === 0 ? 1 : 2 });
+      continue;
+    }
     for (let number = 1; number <= 20; number += 1) {
       rows.push({ code: `${prefix}${number}`, country, quantity: number % 7 === 0 ? 0 : 2 + (number % 4) });
     }
-  }
-  for (let number = 0; number <= 20; number += 1) {
-    rows.push({ code: `FWC${String(number).padStart(2, "0")}`, country: "Special cards", quantity: number === 0 ? 1 : 2 });
   }
   return rows;
 }
@@ -79,8 +101,65 @@ function calculate(items) {
   const discountRate = discountFor(quantity);
   const discount = Math.round(subtotal * discountRate * 100) / 100;
   const discounted = Math.round((subtotal - discount) * 100) / 100;
-  const minimumApplied = quantity > 0 && quantity < 10 && discounted < 3;
-  return { quantity, subtotal, discountRate, discount, minimumApplied, total: minimumApplied ? 3 : discounted };
+  const minimumApplied = quantity > 0 && discounted < 1;
+  return { quantity, subtotal, discountRate, discount, minimumApplied, total: minimumApplied ? 1 : discounted };
+}
+
+function itemSort(a, b) {
+  const prefixA = String(a).match(/^[A-Z]+/)?.[0] || "";
+  const prefixB = String(b).match(/^[A-Z]+/)?.[0] || "";
+  const countryDiff = COUNTRY_ORDER.indexOf(prefixA) - COUNTRY_ORDER.indexOf(prefixB);
+  if (countryDiff) return countryDiff;
+  return Number(String(a).match(/\d+$/)?.[0] || 0) - Number(String(b).match(/\d+$/)?.[0] || 0);
+}
+
+function groupedOrderItems(items) {
+  const groups = [];
+  for (const code of Object.keys(items || {}).sort(itemSort)) {
+    const prefix = code.match(/^[A-Z]+/)?.[0] || "";
+    let group = groups.find(item => item.prefix === prefix);
+    if (!group) { group = { prefix, country: COUNTRY_NAMES[prefix] || prefix, cards: [] }; groups.push(group); }
+    group.cards.push({ code, quantity: Number(items[code]) });
+  }
+  return groups;
+}
+
+function orderPlainText(order) {
+  const groups = groupedOrderItems(order.items);
+  return `Hello ${SELLER_DISPLAY_NAME},\n\nVinted user: @${String(order.username).replace(/^@/, "")}\n\nWants to buy ${order.quantity} cards with a value of €${Number(order.amount).toFixed(2)}.\n\nList:\n\n${groups.map(group => `${group.country}\n${group.cards.map(card => `${card.quantity}x - ${card.code}`).join("\n")}`).join("\n\n")}\n\nPlease contact this buyer via Vinted.`;
+}
+
+async function orderSheetJpeg(order) {
+  const groups = groupedOrderItems(order.items);
+  const lines = groups.flatMap(group => [group.country, ...group.cards.map(card => `   ${card.quantity}x   ${card.code}`), ""]);
+  const width = 1100;
+  const height = Math.max(650, 190 + lines.length * 34);
+  const escapeXml = value => String(value).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&apos;"}[c]));
+  let y = 145;
+  const rows = lines.map(line => {
+    const isCountry = line && !line.startsWith("   ");
+    const text = `<text x="${isCountry ? 72 : 92}" y="${y}" font-family="Arial, sans-serif" font-size="${isCountry ? 27 : 23}" font-weight="${isCountry ? 700 : 400}" fill="${isCountry ? "#0e6c61" : "#172b3a"}">${escapeXml(line)}</text>`;
+    y += line ? 34 : 18;
+    return text;
+  }).join("");
+  const svg = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg"><rect width="100%" height="100%" fill="#fffefa"/><rect x="34" y="34" width="${width-68}" height="${height-68}" rx="28" fill="#f7faf8" stroke="#34d6b0" stroke-width="3"/><text x="72" y="92" font-family="Arial,sans-serif" font-size="38" font-weight="700" fill="#081b2c">STICKER SELECTION</text>${rows}</svg>`;
+  return sharp(Buffer.from(svg)).jpeg({ quality: 92 }).toBuffer();
+}
+
+async function sendOrderEmail(order) {
+  if (!mailer || !ORDER_EMAIL_TO) return { sent: false, reason: "Email is not configured." };
+  const jpeg = await orderSheetJpeg(order);
+  const groups = groupedOrderItems(order.items);
+  const listHtml = groups.map(group => `<h3 style="margin:22px 0 7px;color:#0e6c61">${group.country}</h3>${group.cards.map(card => `<div style="padding:5px 0;border-bottom:1px solid #e6ece9">${card.quantity}x – <strong>${card.code}</strong></div>`).join("")}`).join("");
+  await mailer.sendMail({
+    from: process.env.EMAIL_FROM || process.env.SMTP_USER,
+    to: ORDER_EMAIL_TO,
+    subject: `New card request from @${String(order.username).replace(/^@/, "")} · €${Number(order.amount).toFixed(2)}`,
+    text: orderPlainText(order),
+    html: `<div style="font-family:Arial,sans-serif;max-width:680px;margin:auto;background:#fffefa;color:#172b3a"><div style="padding:28px;background:#081b2c;color:white"><div style="color:#34d6b0;font-size:12px;letter-spacing:2px">ANNECY DESTOCK</div><h1 style="margin:8px 0 0">New sticker request</h1></div><div style="padding:28px"><p>Hello ${SELLER_DISPLAY_NAME},</p><p>Vinted user <strong>@${String(order.username).replace(/^@/, "")}</strong> wants to buy <strong>${order.quantity} cards</strong> with a value of <strong>€${Number(order.amount).toFixed(2)}</strong>.</p>${listHtml}<p style="margin-top:28px;padding:16px;background:#e8f8f3;border-radius:10px">Contact this buyer via Vinted. A listing-ready JPEG selection sheet is attached.</p></div></div>`,
+    attachments: [{ filename: `sticker-selection-${order.id}.jpg`, content: jpeg, contentType: "image/jpeg" }]
+  });
+  return { sent: true };
 }
 
 function cleanUsername(value) {
@@ -124,26 +203,25 @@ async function initializeDatabase() {
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
   `);
-  const count = await pool.query("SELECT COUNT(*)::int AS count FROM inventory");
-  if (count.rows[0].count === 0) {
-    const seed = defaultInventory();
-    const client = await pool.connect();
-    try {
-      await client.query("BEGIN");
-      for (let i = 0; i < seed.length; i += 1) {
-        const row = seed[i];
-        await client.query("INSERT INTO inventory(code,country,quantity,sort_order) VALUES($1,$2,$3,$4)", [row.code, row.country, row.quantity, i]);
-      }
-      await client.query("COMMIT");
-    } catch (error) {
-      await client.query("ROLLBACK");
-      throw error;
-    } finally { client.release(); }
-  }
+  const seed = defaultInventory();
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    await client.query("DELETE FROM inventory WHERE NOT (regexp_replace(code, '[0-9]', '', 'g') = ANY($1))", [COUNTRY_ORDER]);
+    for (let i = 0; i < seed.length; i += 1) {
+      const row = seed[i];
+      await client.query(`INSERT INTO inventory(code,country,quantity,sort_order) VALUES($1,$2,$3,$4)
+        ON CONFLICT(code) DO UPDATE SET country=EXCLUDED.country,sort_order=EXCLUDED.sort_order`, [row.code, row.country, row.quantity, i]);
+    }
+    await client.query("COMMIT");
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally { client.release(); }
 }
 
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
-app.get("/api/config", (_req, res) => res.json({ shopName: SHOP_NAME, sellerUsername: SELLER_USERNAME, adminUsername: ADMIN_USERNAME }));
+app.get("/api/config", (_req, res) => res.json({ shopName: SHOP_NAME, sellerUsername: SELLER_USERNAME, adminUsername: ADMIN_USERNAME, emailConfigured: Boolean(mailer && ORDER_EMAIL_TO) }));
 app.get("/api/auth/me", (req, res) => res.json({ user: req.session.user || null }));
 
 app.post("/api/auth/login", async (req, res, next) => {
@@ -203,7 +281,9 @@ app.get("/api/orders/my", requireUser, async (req, res, next) => {
 });
 
 app.post("/api/orders", requireUser, async (req, res, next) => {
+  if (req.body.notifySeller !== true) return res.status(400).json({ error: "You must confirm that the seller may be notified by email." });
   const client = await pool.connect();
+  let createdOrder;
   try {
     await client.query("BEGIN");
     const cartResult = await client.query("SELECT items FROM carts WHERE username=$1 FOR UPDATE", [req.session.user.username.toLowerCase()]);
@@ -216,17 +296,78 @@ app.post("/api/orders", requireUser, async (req, res, next) => {
     }
     const totals = calculate(items);
     for (const [code, qty] of Object.entries(items)) await client.query("UPDATE inventory SET quantity=quantity-$1 WHERE code=$2", [qty, code]);
-    const list = Object.entries(items).map(([code, qty]) => qty > 1 ? `${code}(${qty})` : code).join(", ");
+    const list = Object.keys(items).sort(itemSort).map(code => Number(items[code]) > 1 ? `${code}(${items[code]})` : code).join(", ");
     const message = `Selection from ${req.session.user.username} for €${totals.total.toFixed(2)}, including: ${list}`;
     const result = await client.query(`INSERT INTO orders(username,items,quantity,subtotal,discount,amount,message)
       VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING *`, [req.session.user.username, JSON.stringify(items), totals.quantity, totals.subtotal, totals.discount, totals.total, message]);
     await client.query("DELETE FROM carts WHERE username=$1", [req.session.user.username.toLowerCase()]);
     await client.query("COMMIT");
-    res.status(201).json(result.rows[0]);
+    createdOrder = result.rows[0];
   } catch (error) {
     await client.query("ROLLBACK");
-    next(error);
+    return next(error);
   } finally { client.release(); }
+  try {
+    const email = await sendOrderEmail(createdOrder);
+    res.status(201).json({ ...createdOrder, emailSent: email.sent, emailWarning: email.sent ? null : email.reason });
+  } catch (emailError) {
+    console.error("Order email failed", emailError);
+    res.status(201).json({ ...createdOrder, emailSent: false, emailWarning: "The reservation was saved, but the email could not be sent." });
+  }
+});
+
+app.get("/api/admin/inventory/template", requireAdmin, async (_req, res, next) => {
+  try {
+    const rows = (await pool.query("SELECT code,country,quantity FROM inventory ORDER BY sort_order,code")).rows;
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet("Inventory", { views: [{ state: "frozen", ySplit: 4 }] });
+    sheet.columns = [{ header:"Card code",key:"code",width:18 },{ header:"Country",key:"country",width:30 },{ header:"Quantity",key:"quantity",width:16 }];
+    sheet.insertRow(1, ["ANNECY DESTOCK · INVENTORY IMPORT"]);
+    sheet.mergeCells("A1:C1");
+    sheet.getCell("A1").font = { bold:true,size:18,color:{argb:"FFFFFFFF"} };
+    sheet.getCell("A1").fill = { type:"pattern",pattern:"solid",fgColor:{argb:"FF081B2C"} };
+    sheet.getCell("A2").value = "Edit only the Quantity column. Keep card codes unchanged, then upload this file in the admin dashboard.";
+    sheet.mergeCells("A2:C2");
+    sheet.getCell("A2").font = { italic:true,color:{argb:"FF536671"} };
+    sheet.getRow(4).values = ["Card code","Country","Quantity"];
+    sheet.getRow(4).font = { bold:true,color:{argb:"FF081B2C"} };
+    sheet.getRow(4).fill = { type:"pattern",pattern:"solid",fgColor:{argb:"FF9FE8D6"} };
+    rows.forEach(row => sheet.addRow([row.code,row.country,row.quantity]));
+    sheet.autoFilter = `A4:C${sheet.rowCount}`;
+    sheet.getColumn(3).numFmt = "0";
+    const buffer = await workbook.xlsx.writeBuffer();
+    res.setHeader("Content-Type","application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    res.setHeader("Content-Disposition",'attachment; filename="annecy-destock-inventory.xlsx"');
+    res.send(Buffer.from(buffer));
+  } catch (error) { next(error); }
+});
+
+app.post("/api/admin/inventory/import", requireAdmin, upload.single("inventory"), async (req, res, next) => {
+  if (!req.file) return res.status(400).json({ error:"Choose an Excel file first." });
+  const client = await pool.connect();
+  try {
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(req.file.buffer);
+    const sheet = workbook.getWorksheet("Inventory") || workbook.worksheets[0];
+    if (!sheet) throw Object.assign(new Error("The workbook has no Inventory sheet."), { status:400 });
+    const items = [];
+    sheet.eachRow((row, number) => {
+      if (number <= 4) return;
+      const code = String(row.getCell(1).text || "").trim().toUpperCase();
+      const quantity = Number(row.getCell(3).value);
+      if (code && Number.isInteger(quantity) && quantity >= 0 && quantity <= 9999) items.push({ code, quantity });
+    });
+    if (!items.length) throw Object.assign(new Error("No valid inventory rows were found."), { status:400 });
+    await client.query("BEGIN");
+    let updated = 0;
+    for (const item of items) {
+      const result = await client.query("UPDATE inventory SET quantity=$1 WHERE code=$2", [item.quantity,item.code]);
+      updated += result.rowCount;
+    }
+    await client.query("COMMIT");
+    res.json({ ok:true, updated });
+  } catch (error) { await client.query("ROLLBACK"); next(error); }
+  finally { client.release(); }
 });
 
 app.get("/api/admin/orders", requireAdmin, async (_req, res, next) => {

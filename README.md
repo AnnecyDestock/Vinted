@@ -16,6 +16,9 @@ A mobile-friendly card catalogue, reservation cart, Vinted message generator, an
 - Inventory editing and bulk additions
 - Paid/cancelled order workflow with stock restoration
 - Responsive original Card Vault design
+- 18-language customer entry and localized essential shopping flow
+- Customer-confirmed order emails with a listing-ready JPEG attachment
+- Excel inventory download and validated admin upload
 
 ## Deploy to Render
 
@@ -26,8 +29,12 @@ A mobile-friendly card catalogue, reservation cart, Vinted message generator, an
 5. Enter secret values when prompted:
    - `ADMIN_PASSWORD`: a strong, unique password.
    - `SELLER_USERNAME`: your Vinted username.
+   - `ORDER_EMAIL_TO`: the inbox that should receive order requests.
+   - `SMTP_USER`: the email account used to send requests.
+   - `SMTP_PASSWORD`: an email app password, never your normal mailbox password.
+   - `EMAIL_FROM`: for example `Annecy Destock <your-address@gmail.com>`.
 6. Apply the Blueprint and wait for both resources to become available.
-7. Open the generated `annecy-destock.onrender.com` address.
+7. Open the generated `card-vault-market.onrender.com` address.
 
 Customer login accepts any simple username. To open the administrator dashboard, enter `admin` as the username; the password field appears automatically.
 
@@ -41,6 +48,10 @@ Render environment variables control the shop name, seller username, and adminis
 - `SELLER_USERNAME`
 - `ADMIN_USERNAME`
 - `ADMIN_PASSWORD`
+- `SELLER_DISPLAY_NAME`
+- `ORDER_EMAIL_TO`
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`
+- `SMTP_USER`, `SMTP_PASSWORD`, `EMAIL_FROM`
 
 Initial countries and quantities are defined in `server.js`. Prices and discount thresholds appear in both `server.js` and `public/app.js`; the server calculation is authoritative.
 

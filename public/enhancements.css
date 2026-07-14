@@ -1,0 +1,6 @@
+.inventory-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.inventory-actions input{width:260px;margin:0}
+.upload-button{display:inline-block}
+.consent-box{display:flex;align-items:flex-start;gap:10px;margin:18px 0;padding:15px;border:1px solid #9fdfd0;border-radius:12px;background:#eefaf7;font-size:14px;line-height:1.45}
+.consent-box input{margin-top:3px;accent-color:var(--mint)}
+@media(max-width:700px){.inventory-actions{align-items:stretch;flex-direction:column}.inventory-actions input{width:100%}}

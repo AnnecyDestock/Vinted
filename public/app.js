@@ -1,5 +1,25 @@
 const $ = id => document.getElementById(id);
 const state = { config: {}, user: null, inventory: [], cart: {}, orders: [], tab: "inventory" };
+const translations = {
+  en:{tagline:"COLLECT · TRADE · COMPLETE",loginLead:"Build your selection from the cards currently available, then send a request to the seller.",language:"LANGUAGE",username:"YOUR VINTED USERNAME",enter:"Enter the vault",liveInventory:"Inventory updates in real time",heroTitle:"Find the cards your collection needs.",heroLead:"Only cards currently in stock can be reserved.",minimumNote:"Minimum order total: €1.00.",reserve:"Send my request"},
+  fr:{tagline:"COLLECTIONNER · ÉCHANGER · COMPLÉTER",loginLead:"Composez votre sélection parmi les cartes disponibles, puis envoyez une demande au vendeur.",language:"LANGUE",username:"VOTRE PSEUDO VINTED",enter:"Entrer dans la collection",liveInventory:"Stock mis à jour en temps réel",heroTitle:"Trouvez les cartes qu’il manque à votre collection.",heroLead:"Seules les cartes en stock peuvent être réservées.",minimumNote:"Montant minimum de commande : 1,00 €.",reserve:"Envoyer ma demande"},
+  de:{tagline:"SAMMELN · TAUSCHEN · VERVOLLSTÄNDIGEN",loginLead:"Wähle verfügbare Karten aus und sende dem Verkäufer eine Anfrage.",language:"SPRACHE",username:"DEIN VINTED-BENUTZERNAME",enter:"Sammlung öffnen",liveInventory:"Bestand wird live aktualisiert",heroTitle:"Finde die Karten, die deiner Sammlung fehlen.",heroLead:"Nur vorrätige Karten können reserviert werden.",minimumNote:"Mindestbestellwert: 1,00 €.",reserve:"Anfrage senden"},
+  es:{tagline:"COLECCIONA · INTERCAMBIA · COMPLETA",loginLead:"Elige las cartas disponibles y envía una solicitud al vendedor.",language:"IDIOMA",username:"TU USUARIO DE VINTED",enter:"Entrar a la colección",liveInventory:"Inventario actualizado en tiempo real",heroTitle:"Encuentra las cartas que necesita tu colección.",heroLead:"Solo se pueden reservar cartas disponibles.",minimumNote:"Pedido mínimo: 1,00 €.",reserve:"Enviar mi solicitud"},
+  it:{tagline:"COLLEZIONA · SCAMBIA · COMPLETA",loginLead:"Scegli le carte disponibili e invia una richiesta al venditore.",language:"LINGUA",username:"IL TUO NOME VINTED",enter:"Entra nella collezione",liveInventory:"Inventario aggiornato in tempo reale",heroTitle:"Trova le carte che mancano alla tua collezione.",heroLead:"Si possono prenotare solo carte disponibili.",minimumNote:"Ordine minimo: 1,00 €.",reserve:"Invia la richiesta"},
+  nl:{tagline:"VERZAMEL · RUIL · VOLTOOI",loginLead:"Kies beschikbare kaarten en stuur de verkoper een aanvraag.",language:"TAAL",username:"JE VINTED-GEBRUIKERSNAAM",enter:"Open de collectie",liveInventory:"Voorraad wordt live bijgewerkt",heroTitle:"Vind de kaarten die je verzameling nodig heeft.",heroLead:"Alleen kaarten op voorraad kunnen worden gereserveerd.",minimumNote:"Minimale bestelling: €1,00.",reserve:"Mijn aanvraag sturen"},
+  pt:{tagline:"COLECIONA · TROCA · COMPLETA",loginLead:"Escolhe os cartões disponíveis e envia um pedido ao vendedor.",language:"IDIOMA",username:"O TEU UTILIZADOR VINTED",enter:"Entrar na coleção",liveInventory:"Inventário atualizado em tempo real",heroTitle:"Encontra os cartões que faltam na tua coleção.",heroLead:"Apenas cartões disponíveis podem ser reservados.",minimumNote:"Pedido mínimo: 1,00 €.",reserve:"Enviar pedido"},
+  pl:{tagline:"ZBIERAJ · WYMIENIAJ · UZUPEŁNIAJ",loginLead:"Wybierz dostępne karty i wyślij zapytanie sprzedawcy.",language:"JĘZYK",username:"TWOJA NAZWA VINTED",enter:"Otwórz kolekcję",liveInventory:"Stan magazynu aktualizowany na żywo",heroTitle:"Znajdź karty potrzebne w Twojej kolekcji.",heroLead:"Rezerwować można tylko dostępne karty.",minimumNote:"Minimalna wartość zamówienia: 1,00 €.",reserve:"Wyślij zapytanie"},
+  cs:{tagline:"SBÍREJ · VYMĚŇUJ · DOPLŇUJ",loginLead:"Vyberte dostupné karty a odešlete žádost prodejci.",language:"JAZYK",username:"VAŠE JMÉNO NA VINTED",enter:"Vstoupit do sbírky",liveInventory:"Sklad se aktualizuje živě",heroTitle:"Najděte karty, které vaší sbírce chybí.",heroLead:"Rezervovat lze pouze dostupné karty.",minimumNote:"Minimální objednávka: 1,00 €.",reserve:"Odeslat žádost"},
+  sk:{tagline:"ZBIERAJ · VYMIEŇAJ · DOPĹŇAJ",loginLead:"Vyberte dostupné karty a odošlite žiadosť predajcovi.",language:"JAZYK",username:"VAŠE MENO NA VINTED",enter:"Vstúpiť do zbierky",liveInventory:"Sklad sa aktualizuje naživo",heroTitle:"Nájdite karty, ktoré vašej zbierke chýbajú.",heroLead:"Rezervovať možno iba dostupné karty.",minimumNote:"Minimálna objednávka: 1,00 €.",reserve:"Odoslať žiadosť"},
+  hu:{tagline:"GYŰJTS · CSERÉLJ · TELJESÍTS",loginLead:"Válaszd ki az elérhető kártyákat, és küldj kérést az eladónak.",language:"NYELV",username:"VINTED FELHASZNÁLÓNEVED",enter:"Belépés a gyűjteménybe",liveInventory:"Élő készletfrissítés",heroTitle:"Találd meg a gyűjteményedből hiányzó kártyákat.",heroLead:"Csak készleten lévő kártyák foglalhatók.",minimumNote:"Minimum rendelés: 1,00 €.",reserve:"Kérés küldése"},
+  sv:{tagline:"SAMLA · BYT · KOMPLETTERA",loginLead:"Välj tillgängliga kort och skicka en förfrågan till säljaren.",language:"SPRÅK",username:"DITT VINTED-NAMN",enter:"Öppna samlingen",liveInventory:"Lagret uppdateras i realtid",heroTitle:"Hitta korten som din samling behöver.",heroLead:"Endast kort i lager kan reserveras.",minimumNote:"Minsta beställning: 1,00 €.",reserve:"Skicka förfrågan"},
+  da:{tagline:"SAML · BYT · FULDFØR",loginLead:"Vælg tilgængelige kort og send en forespørgsel til sælgeren.",language:"SPROG",username:"DIT VINTED-NAVN",enter:"Åbn samlingen",liveInventory:"Lager opdateres i realtid",heroTitle:"Find kortene din samling mangler.",heroLead:"Kun kort på lager kan reserveres.",minimumNote:"Minimumsbestilling: 1,00 €.",reserve:"Send forespørgsel"},
+  fi:{tagline:"KERÄÄ · VAIHDA · TÄYDENNÄ",loginLead:"Valitse saatavilla olevat kortit ja lähetä pyyntö myyjälle.",language:"KIELI",username:"VINTED-KÄYTTÄJÄNIMESI",enter:"Avaa kokoelma",liveInventory:"Varasto päivittyy reaaliajassa",heroTitle:"Löydä kokoelmastasi puuttuvat kortit.",heroLead:"Vain varastossa olevia kortteja voi varata.",minimumNote:"Minimitilaus: 1,00 €.",reserve:"Lähetä pyyntö"},
+  ro:{tagline:"COLECȚIONEAZĂ · SCHIMBĂ · COMPLETEAZĂ",loginLead:"Alege cartonașele disponibile și trimite o cerere vânzătorului.",language:"LIMBĂ",username:"NUMELE TĂU VINTED",enter:"Intră în colecție",liveInventory:"Stoc actualizat în timp real",heroTitle:"Găsește cartonașele care lipsesc din colecția ta.",heroLead:"Pot fi rezervate doar cartonașele disponibile.",minimumNote:"Comandă minimă: 1,00 €.",reserve:"Trimite cererea"},
+  hr:{tagline:"PRIKUPLJAJ · MIJENJAJ · DOVRŠI",loginLead:"Odaberi dostupne sličice i pošalji zahtjev prodavatelju.",language:"JEZIK",username:"TVOJE VINTED IME",enter:"Otvori kolekciju",liveInventory:"Zaliha se ažurira uživo",heroTitle:"Pronađi sličice koje nedostaju tvojoj kolekciji.",heroLead:"Mogu se rezervirati samo dostupne sličice.",minimumNote:"Minimalna narudžba: 1,00 €.",reserve:"Pošalji zahtjev"},
+  el:{tagline:"ΣΥΛΛΕΞΕ · ΑΝΤΑΛΛΑΞΕ · ΣΥΜΠΛΗΡΩΣΕ",loginLead:"Επίλεξε διαθέσιμες κάρτες και στείλε αίτημα στον πωλητή.",language:"ΓΛΩΣΣΑ",username:"ΤΟ ΟΝΟΜΑ ΣΟΥ ΣΤΟ VINTED",enter:"Άνοιγμα συλλογής",liveInventory:"Ζωντανή ενημέρωση αποθέματος",heroTitle:"Βρες τις κάρτες που λείπουν από τη συλλογή σου.",heroLead:"Μόνο διαθέσιμες κάρτες μπορούν να κρατηθούν.",minimumNote:"Ελάχιστη παραγγελία: 1,00 €.",reserve:"Αποστολή αιτήματος"},
+  lt:{tagline:"RINK · KEISK · UŽBAIK",loginLead:"Pasirink turimas korteles ir siųsk užklausą pardavėjui.",language:"KALBA",username:"TAVO VINTED VARDAS",enter:"Atverti kolekciją",liveInventory:"Atsargos atnaujinamos tiesiogiai",heroTitle:"Rask korteles, kurių trūksta tavo kolekcijai.",heroLead:"Rezervuoti galima tik turimas korteles.",minimumNote:"Minimali užsakymo suma: 1,00 €.",reserve:"Siųsti užklausą"}
+};
 const money = value => new Intl.NumberFormat("en-IE", { style: "currency", currency: "EUR" }).format(Number(value || 0));
 const safe = value => String(value ?? "").replace(/[&<>'"]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", "'":"&#39;", '"':"&quot;" }[c]));
 const priceFor = code => code === "FWC00" ? 2 : code.startsWith("FWC") || Number(code.replace(/\D/g, "")) === 1 ? .5 : .3;
@@ -35,8 +55,16 @@ function calculate(items = state.cart) {
   const rate = quantity >= 200 ? .15 : quantity >= 100 ? .1 : quantity >= 50 ? .07 : quantity >= 30 ? .05 : 0;
   const discount = Math.round(subtotal * rate * 100) / 100;
   const discounted = Math.round((subtotal - discount) * 100) / 100;
-  const minimumApplied = quantity > 0 && quantity < 10 && discounted < 3;
-  return { quantity, subtotal, discount, rate, minimumApplied, total: minimumApplied ? 3 : discounted };
+  const minimumApplied = quantity > 0 && discounted < 1;
+  return { quantity, subtotal, discount, rate, minimumApplied, total: minimumApplied ? 1 : discounted };
+}
+
+function applyLanguage(language) {
+  const chosen = translations[language] ? language : "en";
+  localStorage.setItem("cardVaultLanguage", chosen);
+  document.documentElement.lang = chosen;
+  $("languageSelect").value = chosen;
+  document.querySelectorAll("[data-i18n]").forEach(element => { const value = translations[chosen][element.dataset.i18n]; if (value) element.textContent = value; });
 }
 
 async function login(event) {
@@ -74,6 +102,7 @@ async function enterApplication() {
 }
 
 function renderCustomer() {
+  applyLanguage($("languageSelect").value);
   $("availableCount").textContent = state.inventory.reduce((sum, item) => sum + item.quantity, 0);
   renderCatalog(); renderCart(); renderOrderBanner();
 }
@@ -126,13 +155,14 @@ async function clearCart() {
 
 async function createOrder() {
   const totals = calculate();
-  openModal(`<p class="eyebrow mint">CONFIRM RESERVATION</p><h2>Reserve ${totals.quantity} cards?</h2><p>Your total is <strong>${money(totals.total)}</strong>. Stock will be reserved immediately.</p><div class="modal-actions"><button class="button secondary" data-close>Go back</button><button id="confirmOrder" class="button primary">Confirm reservation</button></div>`);
+  openModal(`<p class="eyebrow mint">CONFIRM REQUEST</p><h2>Send a request for ${totals.quantity} cards?</h2><p>Your total is <strong>${money(totals.total)}</strong>. The cards will be reserved immediately.</p><label class="consent-box"><input id="emailConsent" type="checkbox"><span>I confirm that I want this request emailed to the seller. The seller will contact me through my Vinted username.</span></label><div class="modal-actions"><button class="button secondary" data-close>Go back</button><button id="confirmOrder" class="button primary" disabled>Confirm and email seller</button></div>`);
+  $("emailConsent").onchange = () => $("confirmOrder").disabled = !$("emailConsent").checked;
   $("confirmOrder").onclick = async () => {
     setLoading(true);
     try {
-      const order = await api("/api/orders", { method: "POST" });
+      const order = await api("/api/orders", { method: "POST", body: { notifySeller: true } });
       state.cart = {}; state.orders.unshift(order); state.inventory = await api("/api/inventory");
-      openModal(`<p class="eyebrow mint">RESERVATION CONFIRMED</p><h2>Your cards are reserved!</h2><p>Copy this message and send it to <strong>${safe(state.config.sellerUsername)}</strong> in Vinted messages.</p><div id="orderMessage" class="message-box">${safe(order.message)}</div><button id="copyMessage" class="button primary wide">Copy Vinted message <span>⧉</span></button>`);
+      openModal(`<p class="eyebrow mint">REQUEST CONFIRMED</p><h2>Your cards are reserved!</h2><p>${order.emailSent ? "The seller received your email and will contact you on Vinted." : safe(order.emailWarning || "The request was saved, but email delivery needs attention.")}</p><div id="orderMessage" class="message-box">${safe(order.message)}</div><button id="copyMessage" class="button primary wide">Copy backup message <span>⧉</span></button>`);
       $("copyMessage").onclick = () => copyText(order.message);
       renderCustomer();
     } catch (error) { closeModal(); toast(error.message); }
@@ -176,6 +206,22 @@ async function bulkAdd() {
   setLoading(true); try { await api("/api/admin/inventory/bulk", { method:"POST", body:{ items } }); state.inventory = await api("/api/inventory"); renderAdmin(); toast("Stock added."); } catch(error){toast(error.message)} finally{setLoading(false)}
 }
 
+async function importExcel(file) {
+  if (!file) return;
+  const form = new FormData();
+  form.append("inventory", file);
+  setLoading(true);
+  try {
+    const response = await fetch("/api/admin/inventory/import", { method:"POST", body:form });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.error || "Excel import failed.");
+    state.inventory = await api("/api/inventory");
+    renderAdmin();
+    toast(`${result.updated} inventory rows updated from Excel.`);
+  } catch (error) { toast(error.message); }
+  finally { $("excelUpload").value = ""; setLoading(false); }
+}
+
 function renderOrders() {
   const query = $("orderSearch").value.trim().toLowerCase();
   const orders = state.orders.filter(o => !query || o.username.toLowerCase().includes(query) || Object.keys(o.items).join(" ").toLowerCase().includes(query));
@@ -199,10 +245,12 @@ function closeModal() { $("modal").classList.add("hidden"); }
 async function copyText(text) { try { await navigator.clipboard.writeText(text); toast("Copied to clipboard."); } catch { toast("Select and copy the message manually."); } }
 
 $("loginForm").addEventListener("submit", login);
+$("languageSelect").addEventListener("change", event => applyLanguage(event.target.value));
 $("username").addEventListener("input", () => $("passwordGroup").classList.toggle("hidden", $("username").value.trim().toLowerCase() !== String(state.config.adminUsername).toLowerCase()));
 document.querySelectorAll(".logout").forEach(button => button.onclick = logout);
 $("catalogSearch").oninput = renderCatalog; $("clearCart").onclick = clearCart; $("orderBtn").onclick = createOrder;
 $("inventorySearch").oninput = renderInventory; $("countrySelect").onchange = renderBulkGrid; $("bulkAdd").onclick = bulkAdd; $("orderSearch").oninput = renderOrders;
+$("excelUpload").onchange = event => importExcel(event.target.files[0]);
 document.querySelectorAll(".tabs button").forEach(button => button.onclick = () => switchTab(button.dataset.tab));
 $("copyPending").onclick = () => { const messages = state.orders.filter(x=>x.status==="pending").map(x=>x.message); messages.length ? copyText(messages.join("\n\n")) : toast("No pending orders."); };
 $("resetDatabase").onclick = async () => { if (!confirm("This permanently erases every cart and order and restores the sample inventory. Continue?")) return; setLoading(true); try{await api("/api/admin/reset",{method:"POST"});state.inventory=await api("/api/inventory");state.orders=[];renderAdmin();toast("Database reset.")}catch(e){toast(e.message)}finally{setLoading(false)}};
@@ -212,6 +260,7 @@ $("modalClose").onclick = closeModal; $("modal").onclick = event => { if (event.
   setLoading(true);
   try {
     state.config = await api("/api/config");
+    applyLanguage(localStorage.getItem("cardVaultLanguage") || navigator.language.slice(0,2));
     document.title = state.config.shopName; $("loginTitle").textContent = state.config.shopName; document.querySelectorAll(".shop-name").forEach(x => x.textContent = state.config.shopName);
     state.user = (await api("/api/auth/me")).user;
     if (state.user) await enterApplication(); else showView("loginView");

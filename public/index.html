@@ -9,6 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/enhancements.css">
 </head>
 <body>
   <div id="loading" class="loading hidden"><span></span></div>
@@ -17,15 +18,18 @@
   <main id="loginView" class="login-shell">
     <section class="login-card">
       <div class="logo large">CV</div>
-      <p class="eyebrow">COLLECT · TRADE · COMPLETE</p>
+      <p class="eyebrow" data-i18n="tagline">COLLECT · TRADE · COMPLETE</p>
       <h1 id="loginTitle">Card Vault</h1>
-      <p class="lead">Build your selection from the cards currently available, then send it directly to the seller on Vinted.</p>
+      <p class="lead" data-i18n="loginLead">Build your selection from the cards currently available, then send it directly to the seller on Vinted.</p>
       <form id="loginForm">
-        <label>YOUR VINTED USERNAME<input id="username" autocomplete="username" maxlength="60" placeholder="For example: lolek" required></label>
+        <label><span data-i18n="language">LANGUAGE</span><select id="languageSelect">
+          <option value="en">English</option><option value="fr">Français</option><option value="de">Deutsch</option><option value="es">Español</option><option value="it">Italiano</option><option value="nl">Nederlands</option><option value="pt">Português</option><option value="pl">Polski</option><option value="cs">Čeština</option><option value="sk">Slovenčina</option><option value="hu">Magyar</option><option value="sv">Svenska</option><option value="da">Dansk</option><option value="fi">Suomi</option><option value="ro">Română</option><option value="hr">Hrvatski</option><option value="el">Ελληνικά</option><option value="lt">Lietuvių</option>
+        </select></label>
+        <label><span data-i18n="username">YOUR VINTED USERNAME</span><input id="username" autocomplete="username" maxlength="60" placeholder="For example: @CarlaB" required></label>
         <label id="passwordGroup" class="hidden">ADMINISTRATOR PASSWORD<input id="password" type="password" autocomplete="current-password" placeholder="Your secure password"></label>
-        <button class="button primary wide" type="submit">Enter the vault <span>→</span></button>
+        <button class="button primary wide" type="submit"><span data-i18n="enter">Enter the vault</span> <span>→</span></button>
       </form>
-      <div class="login-note"><span>●</span> Inventory updates in real time</div>
+      <div class="login-note"><span>●</span> <span data-i18n="liveInventory">Inventory updates in real time</span></div>
     </section>
   </main>
 
@@ -36,7 +40,7 @@
     </header>
     <main class="page">
       <section class="hero">
-        <div><p class="eyebrow mint">LIVE INVENTORY</p><h1>Find the cards<br>your collection needs.</h1><p>Only cards currently in stock can be reserved.</p></div>
+        <div><p class="eyebrow mint" data-i18n="liveInventory">LIVE INVENTORY</p><h1 data-i18n="heroTitle">Find the cards your collection needs.</h1><p data-i18n="heroLead">Only cards currently in stock can be reserved.</p></div>
         <div class="hero-stat"><strong id="availableCount">0</strong><span>cards available</span></div>
       </section>
       <section class="price-grid">
@@ -57,9 +61,9 @@
             <div><span>Subtotal</span><strong id="subtotal">€0.00</strong></div>
             <div id="discountRow" class="discount hidden"><span>Discount</span><strong id="discount">−€0.00</strong></div>
             <div class="grand"><span>Total</span><strong id="total">€0.00</strong></div>
-            <p id="minimumNote" class="minimum hidden">Minimum €3.00 total applies below 10 cards.</p>
+            <p id="minimumNote" class="minimum hidden" data-i18n="minimumNote">Minimum order total: €1.00.</p>
           </div>
-          <button id="orderBtn" class="button primary wide" disabled>Reserve my cards <span>→</span></button>
+          <button id="orderBtn" class="button primary wide" disabled><span data-i18n="reserve">Send my request</span> <span>→</span></button>
           <button id="clearCart" class="text-button" disabled>Clear selection</button>
           <p class="secure-note">⌾ Cards are reserved when you confirm</p>
         </aside>
@@ -73,7 +77,7 @@
       <section class="admin-intro"><div><p class="eyebrow mint">ADMINISTRATION</p><h1>Control room</h1><p>Manage stock, add cards, and process reservations.</p></div><button id="resetDatabase" class="button danger">Reset all data</button></section>
       <section id="stats" class="stats"></section>
       <nav class="tabs"><button class="active" data-tab="inventory">Inventory</button><button data-tab="add">Add cards</button><button data-tab="orders">Orders</button></nav>
-      <section id="inventoryTab" class="panel admin-panel"><div class="panel-head"><div><h2>Inventory</h2><span class="muted">Adjust quantities instantly</span></div><input id="inventorySearch" type="search" placeholder="Search inventory..."></div><div class="table-wrap"><table><thead><tr><th>Card</th><th>Country</th><th>Price</th><th>Stock</th></tr></thead><tbody id="inventoryBody"></tbody></table></div></section>
+      <section id="inventoryTab" class="panel admin-panel"><div class="panel-head"><div><h2>Inventory</h2><span class="muted">Adjust quantities instantly</span></div><div class="inventory-actions"><input id="inventorySearch" type="search" placeholder="Search inventory..."><a class="button secondary" href="/api/admin/inventory/template">Download Excel</a><label class="button secondary upload-button">Upload Excel<input id="excelUpload" type="file" accept=".xlsx" hidden></label></div></div><div class="table-wrap"><table><thead><tr><th>Card</th><th>Country</th><th>Price</th><th>Stock</th></tr></thead><tbody id="inventoryBody"></tbody></table></div></section>
       <section id="addTab" class="panel admin-panel hidden"><div class="panel-head"><div><h2>Add cards in bulk</h2><span class="muted">Select cards and specify quantities to add</span></div><select id="countrySelect"></select></div><div id="bulkGrid" class="bulk-grid"></div><button id="bulkAdd" class="button primary">Add selected stock</button></section>
       <section id="ordersTab" class="hidden"><div class="orders-toolbar"><input id="orderSearch" type="search" placeholder="Search customer or card..."><button id="copyPending" class="button secondary">Copy pending orders</button></div><div id="ordersGrid" class="orders-grid"></div></section>
     </main>
